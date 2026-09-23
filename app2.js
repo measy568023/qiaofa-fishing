@@ -49,7 +49,7 @@ const BaitMatch = (() => {
       '<div class="match-tips"><b>🎯 ' + month + '月 · ' + season + '季作钓要点（' + f.name + '）：</b><ul><li>' + Utils.esc(f.tips[season]) + '</li><li>' + envNote + '</li><li>' + Utils.esc(f.notes[0] || '') + '</li></ul>' +
       '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">' +
         '<a href="#s0" class="rel-link" id="matchToCalc">⚖️ 用 ' + f.name + ' 计算钓组 →</a>' +
-        '<a href="#s-tech" class="rel-link amber" id="matchToTech">📖 查看 ' + f.name + ' 技法 →</a>' +
+        '<a href="#s-tech" class="rel-link amber" id="matchToTech">📖 查看 ' + f.name + ' 手册 →</a>' +
       '</div></div>';
     const c = Utils.$('matchToCalc');
     if(c) c.addEventListener('click', () => { Utils.$('calcFish').value = fishId; Calc.run(); });
@@ -344,7 +344,7 @@ const Calc = (() => {
     const toMatch = Utils.$('toMatch');
     if(toMatch){ toMatch.textContent = '🎣 查看 ' + f.name + ' 配饵方案 →'; toMatch.onclick = function(){ openMatch(f.id, inp.month); }; }
     const toTech = Utils.$('toTech');
-    if(toTech){ toTech.textContent = '📖 查看 ' + f.name + ' 技法 →'; toTech.onclick = function(){ jumpToFish(f.id); }; }
+    if(toTech){ toTech.textContent = '📖 查看 ' + f.name + ' 手册 →'; toTech.onclick = function(){ jumpToFish(f.id); }; }
     Utils.$('calcEcho').hidden = true;
     Bridge.post('calc', { fish: f.name, month: inp.month, depth: inp.depthNum, bridge: inp.bridgeNum, lead: lead, fallTime: fallTime });
   }
@@ -387,7 +387,7 @@ const Calc = (() => {
       if(!f) return;
       const tm = Utils.$('toMatch'), tg = Utils.$('toTech');
       if(tm) tm.textContent = '🎣 查看 ' + f.name + ' 配饵方案 →';
-      if(tg) tg.textContent = '📖 查看 ' + f.name + ' 技法 →';
+      if(tg) tg.textContent = '📖 查看 ' + f.name + ' 手册 →';
     });
     Utils.$('calcMonth').addEventListener('change', e => {
       const m = parseInt(e.target.value, 10);
@@ -399,7 +399,8 @@ const Calc = (() => {
 })();
 
 /* ============================================================
- * Tech（桥筏技法库：基础操作 + 主流钓法 + 选位标点）
+ * Tech（桥筏作战手册：① 选位标点 → ② 主流钓法 → ③ 基础操作）
+ * 按出钓流程整合，选目标鱼后自动聚焦适用内容
  * ============================================================ */
 const Tech = (() => {
   function relFishTag(fishId){
@@ -414,11 +415,63 @@ const Tech = (() => {
       el.addEventListener('click', function(){ jumpToFish(el.dataset.jump); });
     });
   }
-  function renderOps(){
+  function focusTag(f, label){
+    if(!f) return '';
+    return '<span class="st-tag" style="background:#fff;color:var(--brand2);">🎯 ' + label + '</span>';
+  }
+  function renderSpots(filterFish){
+    const box = Utils.$('t-spots');
+    if(!box) return;
+    const f = filterFish ? (DATA.fishProfiles || {})[filterFish] : null;
+    let html = '<div class="sub-title">① 选位标点 <span class="st-tag">先去哪钓</span>' + focusTag(f, f ? f.name + ' 适用' : '') + '</div>';
+    const spots = (DATA.strategy.spots || []).filter(s => !filterFish || (s.fish || []).includes(filterFish));
+    if(!spots.length){
+      html += '<div class="warn-box">该鱼种暂无独立推荐标点，参考总览中的通用选位。</div>';
+    } else {
+      html += '<div class="grid">';
+      spots.forEach(s => {
+        const fish = filterFish ? (s.fish || []).filter(x => x === filterFish) : (s.fish || []);
+        html += '<div class="card"><h4>' + Utils.esc(s.name) + ' <span class="tag green">' + Utils.esc(s.tag) + '</span></h4><ul>' +
+          s.points.map(p => '<li>' + Utils.esc(p) + '</li>').join('') + '</ul>' +
+          '<div style="margin-top:8px;line-height:2.1;">适合鱼种：' + (fish.map(relFishTag).join('') || '—') + '</div></div>';
+      });
+      html += '</div>';
+    }
+    box.innerHTML = html;
+    bindJumps(box);
+  }
+  function renderMethods(filterFish){
+    const box = Utils.$('t-methods');
+    if(!box) return;
+    const f = filterFish ? (DATA.fishProfiles || {})[filterFish] : null;
+    let html = '<div class="sub-title">② 主流钓法 <span class="st-tag">怎么钓 · 台钓桥筏化已标注</span>' + focusTag(f, f ? f.name + ' 适用' : '') + '</div>';
+    const methods = (DATA.strategy.methods || []).filter(m => !filterFish || (m.suits || []).includes(filterFish));
+    if(!methods.length){
+      html += '<div class="warn-box">该鱼种暂无独立推荐钓法，参考通用钓法或总览。</div>';
+    } else {
+      html += '<div class="grid">';
+      methods.forEach(m => {
+        const suits = filterFish ? (m.suits || []).filter(s => s === filterFish) : (m.suits || []);
+        html += '<div class="card"><h4>' + Utils.esc(m.name) + ' <span class="tag green">' + Utils.esc(m.tag) + '</span></h4><ul>' +
+          m.desc.map(d => '<li>' + Utils.esc(d) + '</li>').join('') + '</ul>' +
+          '<div style="margin-top:8px;line-height:2.1;">适用鱼种：' + (suits.map(relFishTag).join('') || '—') + '</div></div>';
+      });
+      html += '</div>';
+    }
+    box.innerHTML = html;
+    bindJumps(box);
+  }
+  function renderOps(filterFish){
     const box = Utils.$('t-ops');
-    const ops = (DATA.strategy.operations || []);
-    let html = '<div class="sub-title">桥筏基础操作 <span class="st-tag">先看这块 · 钓法根基</span></div><div class="grid">';
-    ops.forEach(o => {
+    if(!box) return;
+    const f = filterFish ? (DATA.fishProfiles || {})[filterFish] : null;
+    let html = '<div class="sub-title">③ 基础操作 <span class="st-tag">具体动作 · 全鱼种通用</span>' + focusTag(f, f ? f.name + ' 要点' : '') + '</div>';
+    if(f){
+      const notes = (f.notes || []).map(n => '<li>' + Utils.esc(n) + '</li>').join('');
+      html += '<div class="ok-box"><b>🎯 ' + f.name + ' 操作要点：</b><ul style="margin-left:18px;margin-top:4px;">' + (notes || '<li>参考下方通用操作</li>') + '</ul></div>';
+    }
+    html += '<div class="grid">';
+    (DATA.strategy.operations || []).forEach(o => {
       html += '<div class="card"><h4>' + Utils.esc(o.name) + ' <span class="tag gold">' + Utils.esc(o.tag) + '</span></h4><ul>' +
         o.desc.map(d => '<li>' + Utils.esc(d) + '</li>').join('') + '</ul></div>';
     });
@@ -426,38 +479,10 @@ const Tech = (() => {
     html += '<div class="danger-box"><b>安全红线（上桥必看）：</b>雷雨天气禁止上桥作钓 · 高压线下方严禁抛竿 · 上桥走人行道侧注意车辆 · 失手绳必挂护栏 · 桥面湿滑小心脚下</div>';
     box.innerHTML = html;
   }
-  function renderMethods(filterFish){
-    const box = Utils.$('t-methods');
-    let html = '<div class="sub-title">主流钓法 <span class="st-tag">按鱼情选法 · 台钓可桥筏化已标注</span></div><div class="grid">';
-    (DATA.strategy.methods || []).forEach(m => {
-      const suits = filterFish ? (m.suits || []).filter(s => s === filterFish) : (m.suits || []);
-      if(filterFish && !suits.length) return;
-      html += '<div class="card"><h4>' + Utils.esc(m.name) + ' <span class="tag green">' + Utils.esc(m.tag) + '</span></h4><ul>' +
-        m.desc.map(d => '<li>' + Utils.esc(d) + '</li>').join('') + '</ul>' +
-        '<div style="margin-top:8px;line-height:2.1;">适用鱼种：' + (suits.map(relFishTag).join('') || '—') + '</div></div>';
-    });
-    html += '</div>';
-    box.innerHTML = html;
-    bindJumps(box);
-  }
-  function renderSpots(filterFish){
-    const box = Utils.$('t-spots');
-    let html = '<div class="sub-title">选位与标点 <span class="st-tag">点击鱼种直达配饵/计算器</span></div><div class="grid">';
-    (DATA.strategy.spots || []).forEach(s => {
-      const fish = filterFish ? (s.fish || []).filter(f => f === filterFish) : (s.fish || []);
-      if(filterFish && !fish.length) return;
-      html += '<div class="card"><h4>' + Utils.esc(s.name) + ' <span class="tag green">' + Utils.esc(s.tag) + '</span></h4><ul>' +
-        s.points.map(p => '<li>' + Utils.esc(p) + '</li>').join('') + '</ul>' +
-        '<div style="margin-top:8px;line-height:2.1;">适合鱼种：' + (fish.map(relFishTag).join('') || '—') + '</div></div>';
-    });
-    html += '</div>';
-    box.innerHTML = html;
-    bindJumps(box);
-  }
   function render(filterFish){
-    renderOps();
-    renderMethods(filterFish);
     renderSpots(filterFish);
+    renderMethods(filterFish);
+    renderOps(filterFish);
   }
   return { render: render };
 })();
