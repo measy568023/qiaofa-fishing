@@ -8,7 +8,7 @@
  *  - 跨域请求（天气 API 等）一律放行，不做缓存
  * 更新缓存：改动内容后把 VERSION 递增再部署，自动换新缓存。
  * ============================================================ */
-const VERSION = 'qiaofa-v2.0.3';
+const VERSION = 'qiaofa-v2.0.4';
 const CACHE = 'qiaofa-' + VERSION;
 
 const PRECACHE = [
