@@ -9,7 +9,7 @@
  * ============================================================ */
 const BaitMatch = (() => {
   let fishId = 'crucian';
-  let month = 9;
+  let month = new Date().getMonth() + 1;
   let env = 'wild';
   function seasonOf(m){ return (DATA.monthSeason || {})[m] || '夏'; }
   function findBait(name){
@@ -671,14 +671,15 @@ const UI = (() => {
     document.body.innerHTML = '<div style="padding:60px 20px;text-align:center;font-size:1.1rem;color:#c94b4b;">数据文件 data.js 加载失败，请检查部署（应包含 data.js 文件）。</div>';
     return;
   }
-  /* 月份下拉 */
+  /* 月份下拉（默认跟随当前真实月份） */
+  const nowMonth = new Date().getMonth() + 1;
   const monthOpts = [1,2,3,4,5,6,7,8,9,10,11,12].map(m => {
     const s = (DATA.monthSeason || {})[m] || '';
     return '<option value="' + m + '">' + m + '月（' + s + '季）</option>';
   }).join('');
   const calcMonth = Utils.$('calcMonth'), matchMonth = Utils.$('matchMonth');
-  if(calcMonth){ calcMonth.innerHTML = monthOpts; calcMonth.value = '9'; }
-  if(matchMonth){ matchMonth.innerHTML = monthOpts; matchMonth.value = '9'; }
+  if(calcMonth){ calcMonth.innerHTML = monthOpts; calcMonth.value = String(nowMonth); }
+  if(matchMonth){ matchMonth.innerHTML = monthOpts; matchMonth.value = String(nowMonth); }
   /* 鱼种下拉 */
   const fishOpts = FISH_ORDER.map(id => {
     const f = DATA.fishProfiles[id];
@@ -701,7 +702,7 @@ const UI = (() => {
   if(windSel) windSel.innerHTML = (DATA.winds || []).map(w => '<option value="' + w.id + '">' + Utils.esc(w.name) + '</option>').join('');
   /* 初始化月份季节提示 */
   const ms = Utils.$('monthMsg');
-  if(ms) ms.textContent = '当前：9月 · 秋季';
+  if(ms) ms.textContent = '当前：' + nowMonth + '月 · ' + ((DATA.monthSeason || {})[nowMonth] || '') + '季';
   /* 模块绑定 */
   BaitView.bind();
   BaitMatch.bind();
