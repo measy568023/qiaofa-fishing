@@ -297,9 +297,9 @@ const Weather = (() => {
     const labels = ['今天','明天','后天'];
     let html = '';
     casts.forEach((c, i) => {
-      html += '<div class="day"><div>'+(labels[i]||'')+'</div><div>'+(c.dayweather||'')+'</div>'+
-              '<div><b>'+(c.daytemp||'--')+'°</b> / '+(c.nighttemp||'--')+'°</div>'+
-              '<div>💧'+(c.daypower||'-')+'级</div></div>';
+      html += '<div class="day"><div>'+(labels[i]||'')+'</div><div>'+Utils.esc(c.dayweather||'')+'</div>'+
+              '<div><b>'+Utils.esc(c.daytemp||'--')+'°</b> / '+Utils.esc(c.nighttemp||'--')+'°</div>'+
+              '<div>💧'+Utils.esc(c.daypower||'-')+'级</div></div>';
     });
     Utils.$('daysRow').innerHTML = html || '<div class="day" style="grid-column:1/-1;">暂无预报</div>';
     const windKmh = parseFloat(live.windpower || '0') * 5;
