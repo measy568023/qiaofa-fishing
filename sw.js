@@ -1,19 +1,22 @@
 /* ============================================================
  * 桥筏钓鱼全攻略 · Service Worker（PWA 离线缓存）
  * 策略：
- *  - install  ：预缓存核心资源（页面 / manifest / 图标）
+ *  - install  ：预缓存核心资源（页面 / 数据 / 脚本 / manifest / 图标）
  *  - activate ：清理旧版本缓存，立即接管页面
  *  - fetch    ：同源静态资源「缓存优先、后台更新」(stale-while-revalidate)；
- *               导航请求离线时回退到 index.html（断网也能打开）
- *  - 跨域请求（天气 API 等）一律放行，不做缓存，避免过期数据
+ *               导航请求离线时回退到 index.html
+ *  - 跨域请求（天气 API 等）一律放行，不做缓存
  * 更新缓存：改动内容后把 VERSION 递增再部署，自动换新缓存。
  * ============================================================ */
-const VERSION = 'qiaofa-v1.0.0';
+const VERSION = 'qiaofa-v2.0.0';
 const CACHE = 'qiaofa-' + VERSION;
 
 const PRECACHE = [
   './',
   './index.html',
+  './data.js',
+  './app.js',
+  './app2.js',
   './manifest.webmanifest',
   './assets/icon-192.png',
   './assets/icon-512.png'
