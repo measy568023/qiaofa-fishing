@@ -3,10 +3,10 @@
  * 单独维护此文件并上传覆盖，即可全站更新数据（页面自动检测新版本）。
  * 字段说明见各区块注释。本文件仅包含数据，不含业务逻辑。
  * ============================================================ */
-window.QIAOFA_DATA_VERSION = '2.0.4';
+window.QIAOFA_DATA_VERSION = '2.0.5';
 
 window.QIAOFA_DATA = {
-  version: '2.0.4',
+  version: '2.0.5',
   updatedAt: '2026-09-23',
 
   /* 月份 → 季节映射（计算器按月份联动季节） */
@@ -622,7 +622,8 @@ window.QIAOFA_DATA = {
       { name:'大跑铅（底铅躺底）', tag:'抗流抗杂', desc:['流水、大风、杂鱼闹窝严重时用','三叉转环分别接主线、子线、铅坠','铅坠完全躺底，稳定性极强','缺点：灵敏度相对较低'], suits:['carp','black','sheatfish','catfish','huziniang','wei','chachawei','junyu','ganyu','wuni'] },
       { name:'双铅钓法', tag:'台钓桥筏化', desc:['主铅悬浮 + 子线咬铅触底','兼顾抗流水与灵敏度','走水轻、鱼口滑时首选','是台钓双铅钓法的桥筏应用'], suits:['crucian','carp','huaguyu','yellowtail','bream'] },
       { name:'缓降钓法', tag:'攻击鱼', desc:['攻击性鱼类、全泳层搜索','利用筏轮磁力刹车让饵料匀速缓慢下降','抓口：下降过程中竿稍突然变平、轻微下弯，立即提竿','线杯排线均匀、筏轮精密度高，缓降才均匀自然'], suits:['culter','redfin','qingshao','black','grass','carp','ganyu','bass','mandarin','snakehead'] },
-      { name:'守底钓法', tag:'守大物', desc:['主攻底层大物，重窝+大饵+粗线','提前 1-2 小时打窝，守钓时间 2 小时以上','竿稍调至微弯待命，看大弯弓扬竿','适合青鱼、鲤鱼、鲶鱼、江团等'], suits:['black','carp','sheatfish','wei','ganyu','wuni','chachawei'] }
+      { name:'守底钓法', tag:'守大物', desc:['主攻底层大物，重窝+大饵+粗线','提前 1-2 小时打窝，守钓时间 2 小时以上','竿稍调至微弯待命，看大弯弓扬竿','适合青鱼、鲤鱼、鲶鱼、江团等'], suits:['black','carp','sheatfish','wei','ganyu','wuni','chachawei'] },
+      { name:'点搜法', tag:'逗钓利器', desc:['放线几秒停顿一下，模拟受伤小鱼自然下落','停顿和下落过程中给口最多','全程紧盯竿稍，任何轻微下弯立即提竿','适合翘嘴、红梢、鳜鱼、黑鱼、鲈鱼、鳡鱼等掠食性鱼类'], suits:['culter','qingshao','redfin','mandarin','snakehead','catfish','sheatfish','huziniang','shatangli','bass','ganyu','minnow'] }
     ],
 
     /* 选位标点（fish 关联鱼种） */
