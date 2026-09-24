@@ -341,7 +341,8 @@ const Weather = (() => {
         const geo = await Utils.fetchJSON('https://restapi.amap.com/v3/geocode/regeo?key='+cfg.key+'&location='+lon.toFixed(5)+','+lat.toFixed(5), 8000);
         const ac = geo && geo.regeocode ? geo.regeocode.addressComponent : null;
         let adcode = ac ? ac.adcode : null;
-        const cityNm = ac ? [ac.city || ac.province, ac.township || ac.district].filter(Boolean).join(' · ') : null;
+        const cty = (ac && Array.isArray(ac.city)) ? ac.city[0] : (ac ? ac.city : null);
+        const cityNm = ac ? [cty || ac.province, ac.township || ac.district].filter(Boolean).join(' · ') : null;
         if(cityNm && currentCity && !currentCity.userSet) currentCity.name = cityNm;
         if(!adcode){
           const near = nearestDistrict(lat, lon, 45);
@@ -395,7 +396,7 @@ const Weather = (() => {
     return lat.toFixed(2)+','+lon.toFixed(2);
   }
   function amapAdcode(dist){
-    const map = { '翠屏':'511502','叙州':'511503','南溪':'511503','江安':'511523','长宁':'511524','高县':'511525','珙县':'511526','筠连':'511527','兴文':'511528','屏山':'511529' };
+    const map = { '翠屏':'511502','南溪':'511503','叙州':'511504','江安':'511523','长宁':'511524','高县':'511525','珙县':'511526','筠连':'511527','兴文':'511528','屏山':'511529' };
     return map[dist] || '511500';
   }
   function approxKm(lat1, lon1, lat2, lon2){
@@ -419,8 +420,9 @@ const Weather = (() => {
         const r = j && j.regeocode;
         if(r && r.addressComponent){
           const ac = r.addressComponent;
+          const cty = Array.isArray(ac.city) ? ac.city[0] : ac.city;
           const street = ac.streetNumber && ac.streetNumber.street ? ac.streetNumber.street : ac.township;
-          const parts = [ac.city || ac.province, ac.district, street].filter(Boolean);
+          const parts = [cty || ac.province, ac.district, street].filter(Boolean);
           const uniq = [];
           parts.forEach(p => { if(p && !uniq.includes(p)) uniq.push(p); });
           if(uniq.length) return uniq.join(' · ');
