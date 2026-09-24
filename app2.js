@@ -664,6 +664,79 @@ const UI = (() => {
 })();
 
 /* ============================================================
+ * Collapse（三大模块折叠/展开）
+ * ============================================================ */
+const Collapse = (() => {
+  const SECTIONS = ['s0', 's-bait', 's-tech'];
+  function updateBtn(){
+    const btn = Utils.$('foldAllBtn');
+    if(!btn) return;
+    const allCollapsed = SECTIONS.every(id => {
+      const sec = document.getElementById(id);
+      return sec && sec.classList.contains('collapsed');
+    });
+    btn.textContent = allCollapsed ? '⤵ 全部展开' : '⤴ 全部折叠';
+  }
+  function setState(id, collapsed){
+    const sec = document.getElementById(id);
+    if(!sec) return;
+    sec.classList.toggle('collapsed', collapsed);
+    const head = sec.querySelector('.sec-head');
+    if(head) head.setAttribute('aria-expanded', String(!collapsed));
+  }
+  function expandForHash(hash){
+    if(!hash) return;
+    const id = hash.slice(1);
+    if(SECTIONS.indexOf(id) >= 0){
+      setState(id, false);
+      updateBtn();
+    }
+  }
+  function init(){
+    SECTIONS.forEach(id => {
+      const sec = document.getElementById(id);
+      if(!sec) return;
+      sec.setAttribute('data-foldable', '1');
+      const head = sec.querySelector('.sec-head');
+      if(!head) return;
+      head.classList.add('collapsible');
+      head.setAttribute('role', 'button');
+      head.setAttribute('tabindex', '0');
+      head.setAttribute('aria-expanded', 'true');
+      const arrow = document.createElement('span');
+      arrow.className = 'collapse-arrow';
+      arrow.textContent = '▲';
+      head.appendChild(arrow);
+      const toggle = () => {
+        const collapsed = !sec.classList.contains('collapsed');
+        setState(id, collapsed);
+        updateBtn();
+      };
+      head.addEventListener('click', toggle);
+      head.addEventListener('keydown', e => {
+        if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggle(); }
+      });
+    });
+    const allBtn = Utils.$('foldAllBtn');
+    if(allBtn){
+      allBtn.addEventListener('click', () => {
+        const anyOpen = SECTIONS.some(id => {
+          const sec = document.getElementById(id);
+          return sec && !sec.classList.contains('collapsed');
+        });
+        SECTIONS.forEach(id => setState(id, anyOpen));
+        updateBtn();
+        Toast.show(anyOpen ? '已全部折叠，点击标题栏可展开' : '已全部展开', 'info');
+      });
+    }
+    updateBtn();
+    window.addEventListener('hashchange', () => expandForHash(location.hash));
+    expandForHash(location.hash);
+  }
+  return { init: init };
+})();
+
+/* ============================================================
  * boot（启动：填充下拉 / 渲染 / 绑定 / 天气初始化 / SW 注册）
  * ============================================================ */
 (function boot(){
@@ -712,6 +785,7 @@ const UI = (() => {
   Tech.render(null);
   Search.bind();
   UI.bind();
+  Collapse.init();
   Weather.bind();
   Weather.init();
   /* PWA：注册 Service Worker */
