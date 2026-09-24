@@ -4,6 +4,8 @@
  * 模块：BaitMatch / MyBaits / BaitView / Calc / Tech / Search / UI / UpdateCheck / boot
  * ============================================================ */
 
+const APP_VERSION = '2.0.6';
+
 /* ============================================================
  * BaitMatch（配饵中心：经典配方 + 收藏到我的饵料）
  * ============================================================ */
@@ -633,28 +635,34 @@ const UI = (() => {
   }
   function checkUpdate(manual){
     if(typeof fetch !== 'function'){ if(manual) Toast.show('当前浏览器不支持检查更新', 'warn'); return; }
-    fetch('./data.js?_=' + Date.now(), { cache:'no-store' })
-      .then(r => r.text())
-      .then(text => {
-        const m = text.match(/window\.QIAOFA_DATA_VERSION\s*=\s*'([^']+)'/);
-        const latest = m ? m[1] : null;
-        if(latest && latest !== DATA_VERSION){
-          Toast.show('发现新数据版本 v' + latest + '，正在刷新…', 'info');
-          setTimeout(function(){ location.reload(); }, 1200);
-        } else if(manual){
-          Toast.show('已是最新版本 v' + DATA_VERSION, 'info');
-        }
-      })
-      .catch(() => {
-        if(manual) Toast.show('检查更新失败（离线或网络异常）', 'warn');
-      });
+    const t = Date.now();
+    Promise.all([
+      fetch('./data.js?_=' + t, { cache:'no-store' }).then(r => r.text()).then(tx => {
+        const m = tx.match(/window\.QIAOFA_DATA_VERSION\s*=\s*'([^']+)'/);
+        return m ? m[1] : null;
+      }).catch(() => null),
+      fetch('./sw.js?_=' + t, { cache:'no-store' }).then(r => r.text()).then(tx => {
+        const m = tx.match(/qiaofa-v([\d.]+)/);
+        return m ? m[1] : null;
+      }).catch(() => null)
+    ]).then(function(res){
+      const dl = res[0], al = res[1];
+      if((dl && dl !== DATA_VERSION) || (al && al !== APP_VERSION)){
+        Toast.show('发现新版本（' + (dl ? '数据 v' + dl : '') + (al ? ' 应用 v' + al : '') + '），正在刷新…', 'info');
+        setTimeout(function(){ location.reload(); }, 1200);
+      } else if(manual){
+        Toast.show('已是最新版本 v' + APP_VERSION, 'info');
+      }
+    }).catch(function(){
+      if(manual) Toast.show('检查更新失败（离线或网络异常）', 'warn');
+    });
   }
   function bind(){
     bindNav();
     bindTop();
     envMark();
     const ver = Utils.$('footVer');
-    if(ver) ver.textContent = 'v' + DATA_VERSION;
+    if(ver) ver.textContent = 'v' + APP_VERSION + ' · 数据 v' + DATA_VERSION;
     const cb = Utils.$('checkBtn');
     if(cb) cb.addEventListener('click', function(){ checkUpdate(true); });
     /* 启动后静默检查一次更新 */
