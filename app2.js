@@ -4,7 +4,7 @@
  * 模块：BaitMatch / MyBaits / BaitView / Calc / Tech / Search / UI / UpdateCheck / boot
  * ============================================================ */
 
-const APP_VERSION = '2.0.6';
+const APP_VERSION = '2.0.7';
 
 /* ============================================================
  * BaitMatch（配饵中心：经典配方 + 收藏到我的饵料）
@@ -648,7 +648,10 @@ const UI = (() => {
     ]).then(function(res){
       const dl = res[0], al = res[1];
       if((dl && dl !== DATA_VERSION) || (al && al !== APP_VERSION)){
-        Toast.show('发现新版本（' + (dl ? '数据 v' + dl : '') + (al ? ' 应用 v' + al : '') + '），正在刷新…', 'info');
+        const parts = [];
+        if(dl) parts.push('数据 v' + dl);
+        if(al) parts.push('应用 v' + al);
+        Toast.show('发现新版本（' + parts.join(' · ') + '），正在刷新…', 'info');
         setTimeout(function(){ location.reload(); }, 1200);
       } else if(manual){
         Toast.show('已是最新版本 v' + APP_VERSION, 'info');
@@ -725,6 +728,8 @@ const Collapse = (() => {
         if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggle(); }
       });
     });
+    /* 默认全部折叠：打开页面只显示模块标题，点击标题栏展开 */
+    SECTIONS.forEach(id => setState(id, true));
     const allBtn = Utils.$('foldAllBtn');
     if(allBtn){
       allBtn.addEventListener('click', () => {
