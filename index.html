@@ -208,6 +208,16 @@
   .toast-error{background:rgba(180,30,30,.95);}
   .sr-flash{animation:srFlash 1.6s ease-out;}
   @keyframes srFlash{0%{background:#fbf0cc;}100%{background:transparent;}}
+  /* ===== 模块折叠 ===== */
+  .fold-toolbar{display:flex;gap:8px;justify-content:flex-end;margin:2px 0 14px;}
+  .fold-toolbar button{border:1px solid var(--line);background:#fff;color:var(--brand);border-radius:999px;padding:8px 16px;min-height:40px;cursor:pointer;font-size:.85rem;transition:.2s;}
+  .fold-toolbar button:hover{background:#eef4f4;border-color:#b9d4d9;}
+  .sec-head.collapsible{cursor:pointer;user-select:none;}
+  .sec-head.collapsible:hover{background:#f6faf7;border-radius:8px 8px 0 0;}
+  .sec-head.collapsible:active{opacity:.85;}
+  .sec-head .collapse-arrow{margin-left:auto;font-size:.8rem;color:var(--muted);transition:transform .25s;flex-shrink:0;}
+  section[data-foldable].collapsed > *:not(.sec-head){display:none;}
+  section[data-foldable].collapsed .collapse-arrow{transform:rotate(180deg);}
   @media(max-width:640px){
     .hero{padding:22px 12px 28px;}
     .hero h1{font-size:1.32rem;}
@@ -296,6 +306,9 @@
   </div>
 </nav>
 <main>
+  <div class="fold-toolbar">
+    <button id="foldAllBtn" title="一键折叠/展开三大模块">⤴ 全部折叠</button>
+  </div>
   <!-- ⓪、钓组计算器 -->
   <section id="s0">
     <div class="sec-head"><div class="num">🧮</div><h2>鱼情与钓组计算器</h2><span class="static-badge">鱼种 × 月份 × 桥高 × 水深 × 水流 × 风力</span></div>
