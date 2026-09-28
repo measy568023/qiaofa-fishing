@@ -316,9 +316,16 @@ tailwind.config = {
     .wb-index{grid-template-columns:1fr;grid-template-areas:"score level" "tips tips";}
     .wb-score{font-size:2rem;}
   }
-  .weather-box{overflow:hidden;}
+  .weather-box{overflow:hidden;grid-template-areas:"top detail" "search search" "quick quick" "target target" "days days" "index index" "meta meta" "err err" "off off";}
+  .wb-err{grid-area:err;}
+  .offline-tip{grid-area:off;}
   .wb-detail span{min-width:0;overflow:hidden;text-overflow:ellipsis;}
   .wb-detail b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  /* 恢复列表样式（Tailwind preflight 会重置 ul/li，导致圆点丢失、间距塌陷） */
+  ul,ol{list-style:disc;padding-left:0;}
+  ol{list-style:decimal;}
+  li{margin-left:18px;margin-bottom:2px;}
+  #safety .danger-box ul{list-style:none;}
   #locBtn{border-radius:10px !important;min-width:48px;margin-left:2px;}
   #locBtn:active{opacity:.8;}
   footer{padding-bottom:calc(24px + env(safe-area-inset-bottom,0px));}
@@ -673,10 +680,10 @@ tailwind.config = {
  * 单独维护此文件并上传覆盖，即可全站更新数据（页面自动检测新版本）。
  * 字段说明见各区块注释。本文件仅包含数据，不含业务逻辑。
  * ============================================================ */
-window.QIAOFA_DATA_VERSION = '2.0.9';
+window.QIAOFA_DATA_VERSION = '2.1.1';
 
 window.QIAOFA_DATA = {
-  version: '2.0.9',
+  version: '2.1.1',
   updatedAt: '2026-09-23',
 
   /* 月份 → 季节映射（计算器按月份联动季节） */
@@ -1936,7 +1943,7 @@ const Weather = (() => {
  * 模块：BaitMatch / MyBaits / BaitView / Calc / Tech / Search / UI / UpdateCheck / boot
  * ============================================================ */
 
-const APP_VERSION = '2.0.9';
+const APP_VERSION = '2.1.1';
 
 /* ============================================================
  * BaitMatch（配饵中心：经典配方 + 收藏到我的饵料）
