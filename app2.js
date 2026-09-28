@@ -4,7 +4,7 @@
  * 模块：BaitMatch / MyBaits / BaitView / Calc / Tech / Search / UI / UpdateCheck / boot
  * ============================================================ */
 
-const APP_VERSION = '2.1.2';
+const APP_VERSION = '2.2.0';
 
 /* ============================================================
  * BaitMatch（配饵中心：经典配方 + 收藏到我的饵料）
@@ -13,21 +13,21 @@ const BaitMatch = (() => {
   let fishId = 'crucian';
   let month = new Date().getMonth() + 1;
   let env = 'wild';
+  const removed = {};
   function seasonOf(m){ return (DATA.monthSeason || {})[m] || '夏'; }
+  function isRemoved(id, name){ return (removed[id] || []).indexOf(name) >= 0; }
+  function cleanList(arr, id){ return (arr || []).filter(n => !isRemoved(id, n)); }
   function findBait(name){
     if(!name) return null;
     const hit = (DATA.baits || []).find(b => b.name === name || b.name.indexOf(name) >= 0 || name.indexOf(b.name) >= 0);
     if(hit) return hit;
     return { brand:'通用', name:name, cat:'—', flavor:'—', target:[], seasons:[], scene:'—', waterRatio:'—', note:'自行准备（未收录库中，可后续在 data.js 追加）' };
   }
-  function mainItem(b){
+  function matchItem(b, name){
     let water = b.waterRatio ? '<span class="b-water">水比 ' + Utils.esc(b.waterRatio) + '</span>' : '';
     return '<div class="match-item"><b>' + Utils.esc(b.brand) + '</b> · ' + Utils.esc(b.name) + water +
-      '<button class="b-add" title="收藏到我的饵料库" data-add-bait="' + Utils.esc(b.name) + '">＋</button></div>';
-  }
-  function plainItem(b){
-    let water = b.waterRatio ? '<span class="b-water">' + Utils.esc(b.waterRatio) + '</span>' : '';
-    return '<div class="match-item"><b>' + Utils.esc(b.brand) + '</b> · ' + Utils.esc(b.name) + water + '</div>';
+      '<button class="b-add" title="收藏到我的饵料库" data-add-bait="' + Utils.esc(b.name) + '">＋</button>' +
+      '<button class="b-del" title="从方案中移除" data-del-bait="' + Utils.esc(name) + '">✕</button></div>';
   }
   function render(){
     const f = (DATA.fishProfiles || {})[fishId];
@@ -35,30 +35,45 @@ const BaitMatch = (() => {
     const box = Utils.$('matchResult');
     if(!box) return;
     const season = seasonOf(month);
-    const main = f.baits.main.map(n => mainItem(findBait(n))).join('');
-    const state = f.baits.state.map(n => plainItem(findBait(n))).join('');
-    const add = f.baits.add.map(n => plainItem(findBait(n))).join('');
-    const nest = f.baits.nest.map(n => plainItem(findBait(n))).join('');
+    const main = cleanList(f.baits.main, fishId).map(n => matchItem(findBait(n), n)).join('');
+    const state = cleanList(f.baits.state, fishId).map(n => matchItem(findBait(n), n)).join('');
+    const add = cleanList(f.baits.add, fishId).map(n => matchItem(findBait(n), n)).join('');
+    const nest = cleanList(f.baits.nest, fishId).map(n => matchItem(findBait(n), n)).join('');
+    const removedCnt = (removed[fishId] || []).length;
     const envNote = env === 'black'
       ? '黑坑模式：鱼密度高、开口快，建议散炮/黄面面抢鱼，线组可略放粗 0.5 号，饵料味型加重。'
       : '野钓模式：窝量适中，避免重窝惊鱼；守大物时窝料加倍。';
     box.innerHTML =
-      '<div class="match-block"><h4><span class="num-dot">1</span>主攻饵（核心）<span style="font-size:.76rem;color:var(--muted);font-weight:400;">点 ＋ 收藏到我的饵料库</span></h4><div class="match-items">' + (main || '<span style="color:var(--muted)">暂无（可用活饵替代）</span>') + '</div></div>' +
+      '<div style="margin-bottom:6px;display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap;">' +
+        (removedCnt ? '<span style="font-size:.76rem;color:var(--muted);align-self:center;">已移除 ' + removedCnt + ' 款，可重置恢复</span>' : '') +
+        '<button class="rel-link amber" id="matchReset" style="border:none;cursor:pointer;">↺ 重置方案</button>' +
+      '</div>' +
+      '<div class="match-block"><h4><span class="num-dot">1</span>主攻饵（核心）<span style="font-size:.76rem;color:var(--muted);font-weight:400;">＋ 收藏 · ✕ 移除</span></h4><div class="match-items">' + (main || '<span style="color:var(--muted)">暂无（可用活饵替代）</span>') + '</div></div>' +
       (state ? '<div class="match-block"><h4><span class="num-dot">2</span>状态饵（调状态）</h4><div class="match-items">' + state + '</div></div>' : '') +
       (add ? '<div class="match-block"><h4><span class="num-dot">3</span>添加剂（增味）</h4><div class="match-items">' + add + '</div></div>' : '') +
       (nest ? '<div class="match-block"><h4><span class="num-dot">4</span>窝料（做窝）</h4><div class="match-items">' + nest + '</div></div>' : '') +
-      '<div class="match-formula">📋 <b>经典配方：</b>' + Utils.esc(f.formula) + '</div>' +
       '<div class="match-tips"><b>🎯 ' + month + '月 · ' + season + '季作钓要点（' + f.name + '）：</b><ul><li>' + Utils.esc(f.tips[season]) + '</li><li>' + envNote + '</li><li>' + Utils.esc(f.notes[0] || '') + '</li></ul>' +
       '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">' +
         '<a href="#s0" class="rel-link" id="matchToCalc">⚖️ 用 ' + f.name + ' 计算钓组 →</a>' +
         '<a href="#s-tech" class="rel-link amber" id="matchToTech">📖 查看 ' + f.name + ' 手册 →</a>' +
       '</div></div>';
+    const rs = Utils.$('matchReset');
+    if(rs) rs.addEventListener('click', function(){ removed[fishId] = []; render(); Toast.show('方案已重置', 'info'); });
     const c = Utils.$('matchToCalc');
-    if(c) c.addEventListener('click', () => { Utils.$('calcFish').value = fishId; Calc.run(); });
+    if(c) c.addEventListener('click', function(){ Utils.$('calcFish').value = fishId; Calc.run(); });
     const g = Utils.$('matchToTech');
-    if(g) g.addEventListener('click', () => jumpToFish(fishId));
+    if(g) g.addEventListener('click', function(){ jumpToFish(fishId); });
     box.querySelectorAll('[data-add-bait]').forEach(el => {
-      el.addEventListener('click', () => { MyBaits.addFromName(el.dataset.addBait); });
+      el.addEventListener('click', function(){ MyBaits.addFromName(el.dataset.addBait); });
+    });
+    box.querySelectorAll('[data-del-bait]').forEach(el => {
+      el.addEventListener('click', function(){
+        const nm = el.dataset.delBait;
+        if(!removed[fishId]) removed[fishId] = [];
+        if(removed[fishId].indexOf(nm) < 0) removed[fishId].push(nm);
+        render();
+        Toast.show('已从方案移除：' + nm, 'info');
+      });
     });
     Bridge.post('match', { fish: f.name, season: season });
   }
