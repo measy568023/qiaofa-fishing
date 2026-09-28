@@ -4,7 +4,7 @@
  * 模块：BaitMatch / MyBaits / BaitView / Calc / Tech / Search / UI / UpdateCheck / boot
  * ============================================================ */
 
-const APP_VERSION = '2.0.9';
+const APP_VERSION = '2.1.1';
 
 /* ============================================================
  * BaitMatch（配饵中心：经典配方 + 收藏到我的饵料）
