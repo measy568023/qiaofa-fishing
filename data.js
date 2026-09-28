@@ -3,10 +3,10 @@
  * 单独维护此文件并上传覆盖，即可全站更新数据（页面自动检测新版本）。
  * 字段说明见各区块注释。本文件仅包含数据，不含业务逻辑。
  * ============================================================ */
-window.QIAOFA_DATA_VERSION = '2.1.2';
+window.QIAOFA_DATA_VERSION = '2.2.0';
 
 window.QIAOFA_DATA = {
-  version: '2.1.2',
+  version: '2.2.0',
   updatedAt: '2026-09-23',
 
   /* 月份 → 季节映射（计算器按月份联动季节） */
@@ -568,6 +568,7 @@ window.QIAOFA_DATA = {
     { brand:'丸九', name:'南极虾粉 / 特选虾粉', cat:'添加剂', flavor:'虾腥', target:['鲫鱼','鲤鱼','罗非'], seasons:['秋','冬','春'], scene:'增腥', waterRatio:'开饵按 5-10% 添加', note:'低温增腥效果显著' },
     { brand:'丸九', name:'蚕蛹粉', cat:'添加剂', flavor:'蚕蛹腥', target:['鲫鱼','鲤鱼'], seasons:['秋','冬'], scene:'增腥', waterRatio:'开饵按 3-5% 添加', note:'5%以内添加，多了招小鱼' },
     { brand:'丸九', name:'诱鲮魂', cat:'粉饵', flavor:'虾粉腥', target:['鲮鱼'], seasons:['春','夏','秋'], scene:'野钓', waterRatio:'饵水 1:0.9', note:'土鲮专攻饵' },
+    { brand:'城市渔仓', name:'诱鲮魂', cat:'粉饵', flavor:'鲜腥虾味', target:['鲮鱼','红眼'], seasons:['春','夏','秋'], scene:'野钓', waterRatio:'饵水 1:0.9', note:'2026 实测：鲜腥浓郁、雾化均匀不返水，十分钟内进窝，搓饵钓底' },
     { brand:'丸九', name:'赤尾青', cat:'添加剂', flavor:'虾腥', target:['鲫鱼','罗非'], seasons:['冬','春'], scene:'低温开口', waterRatio:'开饵按 5-10% 添加', note:'低温促开口' },
     /* ---------- 其他品牌与通用品类 ---------- */
     { brand:'金龙', name:'狂道鲫1号', cat:'粉饵', flavor:'腥香', target:['鲫鱼'], seasons:['秋','冬'], scene:'野钓', waterRatio:'饵水 1:0.95', note:'冬季大板鲫经典' },
@@ -576,9 +577,6 @@ window.QIAOFA_DATA = {
     { brand:'南北', name:'纯谷物', cat:'基础饵', flavor:'谷物本味', target:['鲫鱼','鲤鱼','草鱼'], seasons:['春','夏','秋'], scene:'黑坑/野钓', waterRatio:'按 30-50% 加入主饵', note:'天然谷物，做散炮诱鱼效果好' },
     { brand:'刘志强', name:'全能腥香', cat:'粉饵', flavor:'腥香', target:['鲫鱼','鲤鱼','草鱼','鳊鱼'], seasons:['春','夏','秋','冬'], scene:'野钓通杀', waterRatio:'饵水 1:0.9', note:'广谱性强，状态好' },
     { brand:'刘志强', name:'谷子大师（全能窝）', cat:'窝料', flavor:'谷物发酵', target:['鲤鱼','草鱼','青鱼'], seasons:['夏','秋'], scene:'野钓湖库', waterRatio:'直接打窝，无需开饵', note:'方块打窝料，守大物' },
-    { brand:'金鳞王', name:'荒食无双', cat:'粉饵', flavor:'腥香', target:['鲤鱼','鲫鱼'], seasons:['春','夏','秋'], scene:'野钓', waterRatio:'饵水 1:0.9', note:'平价版“荒食+无双”组合' },
-    { brand:'三友创美', name:'荒王', cat:'颗粒饵', flavor:'藻腥', target:['鲤鱼','青鱼'], seasons:['夏','秋'], scene:'野钓湖库', waterRatio:'泡水 1:0.6 后混合', note:'主攻大型鲤鱼' },
-    { brand:'光威', name:'藻60 / 藻90', cat:'粉饵', flavor:'藻腥', target:['鲫鱼','鲤鱼'], seasons:['春','夏','秋'], scene:'野钓', waterRatio:'饵水 1:0.95', note:'高蛋白藻类饵' },
     { brand:'通用', name:'黄面面（小黄面）', cat:'散炮', flavor:'本味/薯味', target:['鲤鱼','鲫鱼'], seasons:['春','夏','秋'], scene:'黑坑', waterRatio:'饵水 1:0.4-0.5，捏散炮', note:'散炮抢鱼，黑坑常用' },
     { brand:'通用', name:'皮筋颗粒（鲤草/巨青）', cat:'颗粒饵', flavor:'本味', target:['鲤鱼','草鱼','青鱼'], seasons:['春','夏','秋','冬'], scene:'野钓守大物', waterRatio:'开袋即用，挂钩即可', note:'皮筋挂钩，守钓巨物' },
     { brand:'通用', name:'麻团 / 粘粉', cat:'状态饵', flavor:'本味', target:['鲤鱼','草鱼'], seasons:['夏','秋'], scene:'黑坑/野钓', waterRatio:'粘粉蘸颗粒使用', note:'粘粉蘸颗粒麻团钓法' },
@@ -605,7 +603,24 @@ window.QIAOFA_DATA = {
     { brand:'钓鱼王', name:'疯杀鲫本味', cat:'粉饵', flavor:'本味', target:['鲫鱼'], seasons:['冬','春','秋'], scene:'野钓', waterRatio:'饵水 1:0.9', note:'刘松松冬季配方：本味 50% + 钓鱼王腥香 25% + 疯杀鲫浓腥 25%' },
     { brand:'钓鱼王', name:'疯杀鲫浓腥', cat:'粉饵', flavor:'浓腥', target:['鲫鱼'], seasons:['冬','春'], scene:'野钓', waterRatio:'饵水 1:0.9', note:'浓腥版，与疯杀鲫本味搭配' },
     { brand:'钓鱼王', name:'钓鱼王腥香', cat:'粉饵', flavor:'腥香', target:['鲫鱼','鲤鱼'], seasons:['春','夏','秋'], scene:'野钓', waterRatio:'饵水 1:0.9', note:'腥香广谱' },
-    { brand:'化氏', name:'2#鲫鱼 / 奶香鲫', cat:'粉饵', flavor:'奶香', target:['鲫鱼'], seasons:['春','夏','秋'], scene:'黑坑/野钓', waterRatio:'饵水 1:0.95', note:'化绍新黑坑鲫配方组分之一（大板鲫1+一窝疯0.5+2#鲫0.5+奶香鲫0.5+钢弹2号1+藻元素0.5+大黄鲫0.5）' }
+    { brand:'化氏', name:'2#鲫鱼 / 奶香鲫', cat:'粉饵', flavor:'奶香', target:['鲫鱼'], seasons:['春','夏','秋'], scene:'黑坑/野钓', waterRatio:'饵水 1:0.95', note:'化绍新黑坑鲫配方组分之一（大板鲫1+一窝疯0.5+2#鲫0.5+奶香鲫0.5+钢弹2号1+藻元素0.5+大黄鲫0.5）' },
+    /* ---------- 抖音测饵热门（2026 实测口碑，v2.2.0 入库） ---------- */
+    { brand:'钓鱼王', name:'地狱猫（腥香）', cat:'粉饵', flavor:'浓腥', target:['鲫鱼','鲤鱼'], seasons:['秋','冬','春'], scene:'野钓/黑坑', waterRatio:'饵水 1:0.9', note:'2026 实测热门：昆虫蛋白浓腥，秋冬低温开口好，状态蓬松不反水' },
+    { brand:'化氏', name:'一味鲫', cat:'粉饵', flavor:'全能腥香', target:['鲫鱼','鲤鱼','草鱼','鳊鱼'], seasons:['春','夏','秋','冬'], scene:'野钓通杀', waterRatio:'饵水 1:1', note:'2026 实测热门：香+腥搭配广谱，拉饵饱满雾化好，南北通用' },
+    { brand:'刘志强', name:'黑白猫二代', cat:'粉饵', flavor:'腥香', target:['鲫鱼','鲤鱼','草鱼','鳊鱼'], seasons:['春','夏','秋','冬'], scene:'野钓通杀', waterRatio:'饵水 1:0.9', note:'测评推荐广谱款，状态稳定，单开即用' },
+    { brand:'化氏', name:'新四季', cat:'状态饵', flavor:'本味', target:['鲫鱼'], seasons:['春','夏','秋','冬'], scene:'野钓/黑坑', waterRatio:'按 10-30% 加入', note:'可单用也可作状态饵：比重轻、入水膨胀、雾化好附钩强，搓揉影响小' },
+    /* ---------- 添加剂扩充（v2.2.0） ---------- */
+    { brand:'通用', name:'蛋奶香精（黄/白蛋奶）', cat:'添加剂', flavor:'蛋奶香', target:['鲫鱼','鲤鱼','罗非'], seasons:['夏','春'], scene:'黑坑/野钓', waterRatio:'开饵按 1-3% 添加', note:'黄蛋奶钓生口鲫鲤罗非（夏季多用）；白蛋奶钓慢速猾口鱼' },
+    { brand:'通用', name:'香虎', cat:'添加剂', flavor:'增香增腥', target:['鲫鱼','鲤鱼'], seasons:['春','秋','冬'], scene:'黑坑', waterRatio:'100ml 饵加 0.1-0.5g，严格控制', note:'增香增腥、穿透强；用量必须严控，过量易死窝' },
+    { brand:'通用', name:'玉米香精', cat:'添加剂', flavor:'玉米香', target:['鲤鱼','草鱼'], seasons:['夏','秋'], scene:'野钓守大物', waterRatio:'开饵按 1-2% 添加', note:'天然玉米甜香，大鲤大草不可抗拒' },
+    { brand:'通用', name:'薯味香精', cat:'添加剂', flavor:'薯香', target:['鲤鱼'], seasons:['春','夏','秋'], scene:'野钓/黑坑', waterRatio:'开饵按 1-2% 添加', note:'钓鲤鱼最广谱味型，水剂膏状皆可' },
+    { brand:'通用', name:'氨基酸', cat:'添加剂', flavor:'本味', target:['鲫鱼','鲤鱼'], seasons:['冬','春'], scene:'野钓', waterRatio:'开饵按 1% 添加', note:'低温促开口，配合虾粉使用' },
+    { brand:'通用', name:'甜菜碱', cat:'添加剂', flavor:'本味', target:['鲫鱼','鲤鱼','罗非'], seasons:['夏','秋'], scene:'黑坑', waterRatio:'开饵按 0.5-1% 添加', note:'诱食剂，提升摄食欲望，量少为佳' },
+    /* ---------- 窝料扩充（v2.2.0） ---------- */
+    { brand:'通用', name:'原塘颗粒', cat:'窝料', flavor:'本味', target:['鲤鱼','草鱼','鲫鱼'], seasons:['春','夏','秋'], scene:'黑坑/野钓', waterRatio:'直接打窝或泡水搓散', note:'黑坑滑鱼最认，泡散后混合商品饵' },
+    { brand:'通用', name:'红虫颗粒', cat:'窝料', flavor:'红虫腥', target:['鲫鱼','鲤鱼','黄颡'], seasons:['冬','春'], scene:'野钓', waterRatio:'直接打窝，窝量少勤补', note:'冬季桥筏打窝佳品，配酒米用' },
+    { brand:'通用', name:'发酵麦粒', cat:'玉米麦粒', flavor:'酵香', target:['鲤鱼','草鱼','青鱼'], seasons:['夏','秋'], scene:'野钓守大物', waterRatio:'开袋即用，打窝挂钩两用', note:'发酵酵香大颗粒，守钓大物' },
+    { brand:'通用', name:'麸皮团', cat:'窝料', flavor:'本味', target:['草鱼','鳊鱼','鲤鱼'], seasons:['春','夏','秋'], scene:'野钓', waterRatio:'麸皮+玉米粉+水 捏团', note:'经济自制窝，雾化诱草鳊' }
   ],
 
   /* ============================================================
