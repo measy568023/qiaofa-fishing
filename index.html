@@ -311,10 +311,17 @@ tailwind.config = {
   .day{border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);}
   @media(max-width:640px){
     .weather-box{grid-template-areas:"top detail" "search search" "quick quick" "target target" "days days" "index index" "meta meta";}
-    .wb-detail{grid-template-columns:repeat(2,1fr);}
+    .wb-detail{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .wb-detail span:last-child{grid-column:1/-1;flex-direction:row;justify-content:center;align-items:center;gap:4px;}
     .wb-index{grid-template-columns:1fr;grid-template-areas:"score level" "tips tips";}
     .wb-score{font-size:2rem;}
   }
+  .weather-box{overflow:hidden;}
+  .wb-detail span{min-width:0;overflow:hidden;text-overflow:ellipsis;}
+  .wb-detail b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  #locBtn{border-radius:10px !important;min-width:48px;margin-left:2px;}
+  #locBtn:active{opacity:.8;}
+  footer{padding-bottom:calc(24px + env(safe-area-inset-bottom,0px));}
   /* 饵料库：手风琴折叠（默认收起，点击展开） */
   .bait-item{cursor:pointer;}
   .bait-item .bi-top::after{content:"▾";margin-left:auto;color:var(--muted);font-size:.8rem;transition:transform .2s;flex-shrink:0;}
@@ -382,7 +389,7 @@ tailwind.config = {
       </div>
       <div class="wb-err" id="errBar" hidden></div>
       <div class="wb-search">
-        <input id="cityInput" placeholder="输入城市名，如：成都、重庆…" autocomplete="off">
+        <input id="cityInput" placeholder="输入城市名或区县…" autocomplete="off">
         <button id="searchBtn">查询</button>
         <button id="locBtn" title="使用我的位置" style="border:none;border-radius:10px;background:#fff;padding:0 14px;min-width:44px;cursor:pointer;">📍</button>
       </div>
@@ -408,7 +415,7 @@ tailwind.config = {
         <span>💨 <b id="windInfo">--</b></span>
         <span>💧 <b id="humInfo">--</b></span>
         <span>🌡️ <b id="feelInfo">--</b></span>
-        <span>📊 <b id="pressInfo">--</b></span>
+        <span>🧭 <b id="pressInfo">--</b></span>
         <span>☀️ UV <b id="uvInfo">--</b></span>
       </div>
       <div class="wb-days" id="daysRow"></div>
@@ -442,6 +449,7 @@ tailwind.config = {
     <a href="#s-bait">🎣 饵料库</a>
     <a href="#s-tech">📖 作战手册</a>
     <a href="#safety">⚠️ 安全提示</a>
+    <a id="mCheckUpdate" href="#" style="color:#0369a1;font-weight:700;">🔄 检查更新</a>
   </div>
 </nav>
 <main>
@@ -2778,6 +2786,14 @@ const Collapse = (() => {
   };
   window.addEventListener('scroll', onScroll, { passive: true });
   onScroll();
+
+  /* 移动端菜单：检查更新入口（复用页面底部按钮逻辑） */
+  var mcu = document.getElementById('mCheckUpdate');
+  if(mcu) mcu.addEventListener('click', function(e){
+    e.preventDefault();
+    var cb = document.getElementById('checkBtn');
+    if(cb) cb.click();
+  });
 
   /* 饵料手风琴：点击饵料卡展开/收起（事件委托，兼容列表重渲染） */
   document.addEventListener('click', function(e){
