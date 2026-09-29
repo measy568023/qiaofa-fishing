@@ -98,15 +98,20 @@ const Toast = (() => {
   return { show };
 })();
 
-/* ===== FishContext（全局目标鱼：天气/计算器/配饵联动） ===== */
+/* ===== FishContext（全局目标鱼：天气/计算器/配饵联动，状态持久化） ===== */
 const FishContext = (() => {
   let fishId = 'crucian';
+  try{
+    const saved = Store.get('qiaofa_target_fish', null);
+    if(saved && (DATA.fishProfiles || {})[saved]) fishId = saved;
+  }catch(e){}
   const listeners = [];
   function get(){ return fishId; }
   function getFish(){ return (DATA.fishProfiles || {})[fishId] || null; }
   function set(id){
     if(!(DATA.fishProfiles || {})[id]) return;
     fishId = id;
+    Store.set('qiaofa_target_fish', id);
     listeners.forEach(fn => { try{ fn(id); }catch(e){} });
   }
   function onChange(fn){ listeners.push(fn); }
