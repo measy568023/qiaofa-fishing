@@ -4,7 +4,7 @@
  * 模块：BaitMatch / MyBaits / BaitView / Calc / Tech / Search / UI / UpdateCheck / boot
  * ============================================================ */
 
-const APP_VERSION = '2.2.0';
+const APP_VERSION = '2.2.1';
 
 /* ============================================================
  * BaitMatch（配饵中心：经典配方 + 收藏到我的饵料）
@@ -15,6 +15,21 @@ const BaitMatch = (() => {
   let env = 'wild';
   const removed = {};
   function seasonOf(m){ return (DATA.monthSeason || {})[m] || '夏'; }
+  function weatherAdvice(w){
+    if(!w || typeof w.temp !== 'number') return '（暂无实时天气数据，按当前季节常规搭配）';
+    const tips = [];
+    const t = w.temp;
+    if(t < 10) tips.push('❄️ 低温' + Math.round(t) + '°C：主攻浓腥/红虫活饵，添加剂用虾粉/千里香，少打窝勤逗钓');
+    else if(t < 15) tips.push('🌡️ ' + Math.round(t) + '°C 偏凉：腥香为主，可加 10-20% 虾粉，红虫/蚯蚓备选');
+    else if(t <= 28) tips.push('🌤️ ' + Math.round(t) + '°C 温度适宜：腥香均衡，经典老三样正合适，可搓可拉');
+    else if(t <= 33) tips.push('☀️ ' + Math.round(t) + '°C 偏热：清淡本味/谷物为主，避腥避杂鱼，加少量果酸');
+    else tips.push('🔥 ' + Math.round(t) + '°C 酷热：钓桥底阴凉深水，本味+果酸，早晚窗口期');
+    if(w.press && w.press < 1000) tips.push('💨 低压' + Math.round(w.press) + 'hPa 闷热：鱼易上浮，饵料清淡+果酸开胃，建议钓半水');
+    if(w.hum && w.hum > 85) tips.push('💧 湿度 ' + Math.round(w.hum) + '%：饵料开干散些防返水，少开多开');
+    if(w.wind && w.wind >= 20) tips.push('🌬️ 风 ' + Math.round(w.wind) + 'km/h：搓硬饵减雾化加粘粉，加重铅快速到底');
+    if(w.precipProb && w.precipProb > 60) tips.push('🌧️ 降水概率 ' + w.precipProb + '%：雨前腥味诱鱼积极，雨后转本味；雷雨禁钓');
+    return tips.join('；');
+  }
   function isRemoved(id, name){ return (removed[id] || []).indexOf(name) >= 0; }
   function cleanList(arr, id){ return (arr || []).filter(n => !isRemoved(id, n)); }
   function findBait(name){
@@ -43,7 +58,9 @@ const BaitMatch = (() => {
     const envNote = env === 'black'
       ? '黑坑模式：鱼密度高、开口快，建议散炮/黄面面抢鱼，线组可略放粗 0.5 号，饵料味型加重。'
       : '野钓模式：窝量适中，避免重窝惊鱼；守大物时窝料加倍。';
-    box.innerHTML =
+    const wd = (typeof Weather !== 'undefined' && Weather.getLastData) ? Weather.getLastData() : null;
+    const wdHtml = '<div class="weather-bait-advice"><b>🌦️ 今日天气配饵建议：</b><span>' + weatherAdvice(wd) + '</span></div>';
+    box.innerHTML = wdHtml +
       '<div style="margin-bottom:6px;display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap;">' +
         (removedCnt ? '<span style="font-size:.76rem;color:var(--muted);align-self:center;">已移除 ' + removedCnt + ' 款，可重置恢复</span>' : '') +
         '<button class="rel-link amber" id="matchReset" style="border:none;cursor:pointer;">↺ 重置方案</button>' +
@@ -92,6 +109,26 @@ const MyBaits = (() => {
   const KEY = 'qiaofa_my_baits_v2';
   let list = Store.get(KEY, []);
   function save(){ Store.set(KEY, list); }
+  function myBaitAdvice(b){
+    const parts = [];
+    const f = (b.flavor || '').toLowerCase();
+    if(/腥/.test(f)) parts.push('腥味饵：低温/早晚效果好，但易招杂鱼，夏季慎用');
+    if(/香/.test(f) && !/腥/.test(f)) parts.push('香型饵：高温季避杂鱼，广谱稳口');
+    if(/奶/.test(f)) parts.push('奶香：适合钓鲫鱼/生口鱼，黑坑好用');
+    if(/果酸/.test(f)) parts.push('果酸：闷热低压天添加，少量即可（1-3%）');
+    if(/薯/.test(f)) parts.push('薯味：主攻鲤鱼，守钓大物');
+    if(/玉米|发酵|酵|酒/.test(f)) parts.push('玉米/发酵：守大物，草鲤青通用');
+    if(/红虫|虾|虫/.test(f)) parts.push('高蛋白腥饵：低温活性强，配合虾粉增味');
+    if(/本味|谷物|麦|麸/.test(f)) parts.push('本味/谷物：可作基础饵打底，四季通用');
+    if(!parts.length) parts.push('通用型：按目标鱼搭配主攻饵使用');
+    const ratio = (b.ratio || '').replace(/\s+/g, '');
+    if(!ratio) parts.push('建议补充水比，参考同类饵 1:0.9');
+    else if(/1:0\.[1-6]/.test(ratio)) parts.push('水比偏干：适合散炮/搓硬饵或蘸麻团');
+    else if(/1:0\.[7-9]/.test(ratio)) parts.push('水比适中：可搓可拉，通用');
+    else if(/1:1(\.|$)/.test(ratio)) parts.push('水比 1:1：适合拉饵，拉丝粉出丝充分');
+    if(b.fish) parts.push('目标鱼「' + b.fish + '」：配饵时可查对应鱼种的作战手册');
+    return parts.join('；');
+  }
   function render(){
     const box = Utils.$('mybList');
     if(!box) return;
@@ -105,7 +142,8 @@ const MyBaits = (() => {
         (b.flavor ? '<span style="color:var(--muted)">' + Utils.esc(b.flavor) + '</span>' : '') +
         (b.ratio ? '<span style="color:var(--brand2)">水比 ' + Utils.esc(b.ratio) + '</span>' : '') +
         (b.fish ? '<span class="tag">' + Utils.esc(b.fish) + '</span>' : '') +
-        '<button class="mb-del" data-del="' + i + '">删除</button></div>';
+        '<button class="mb-del" data-del="' + i + '">删除</button>' +
+        '<div class="mb-advice">💡 ' + myBaitAdvice(b) + '</div></div>';
     }).join('');
     box.querySelectorAll('[data-del]').forEach(el => {
       el.addEventListener('click', function(){
