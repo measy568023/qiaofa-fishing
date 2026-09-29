@@ -4,7 +4,7 @@
  * 模块：BaitMatch / BaitView / Calc / Tech / Search / UI / UpdateCheck / boot
  * ============================================================ */
 
-const APP_VERSION = '2.2.4';
+const APP_VERSION = '2.2.5';
 
 /* ============================================================
  * BaitMatch（配饵中心：经典配方 + 收藏到我的饵料）
@@ -13,8 +13,11 @@ const BaitMatch = (() => {
   let fishId = 'crucian';
   let month = new Date().getMonth() + 1;
   let env = 'wild';
-  const removed = {};
-  const additions = {};
+  const MATCH_KEY = 'qiaofa_match_state_v1';
+  const savedState = Store.get(MATCH_KEY, null);
+  const removed = (savedState && savedState.removed) || {};
+  const additions = (savedState && savedState.additions) || {};
+  function saveState(){ Store.set(MATCH_KEY, { removed: removed, additions: additions }); }
   function comboList(arr, id, cat){
     return cleanList(arr, id).concat((additions[id] || []).filter(a => a.cat === cat && !isRemoved(id, a.name)).map(a => a.name));
   }
@@ -187,7 +190,7 @@ const BaitMatch = (() => {
         '<a href="#s-tech" class="rel-link amber" id="matchToTech">📖 查看 ' + f.name + ' 手册 →</a>' +
       '</div></div>' + comboHtml;
     const rs = Utils.$('matchReset');
-    if(rs) rs.addEventListener('click', function(){ removed[fishId] = []; additions[fishId] = []; render(); Toast.show('方案已重置', 'info'); });
+    if(rs) rs.addEventListener('click', function(){ removed[fishId] = []; additions[fishId] = []; saveState(); render(); Toast.show('方案已重置', 'info'); });
     const ab = Utils.$('addBaitBtn');
     if(ab) ab.addEventListener('click', function(){
       const inp = Utils.$('addBaitInput');
@@ -199,6 +202,7 @@ const BaitMatch = (() => {
       if(additions[fishId].some(function(a){ return a.name === b.name && a.cat === cat; })){ Toast.show('该饵料已在方案中', 'warn'); return; }
       additions[fishId].push({ name: b.name, cat: cat });
       inp.value = '';
+      saveState();
       render();
       Toast.show('已添加：' + b.name + '（' + cat + '）', 'info');
     });
@@ -213,6 +217,7 @@ const BaitMatch = (() => {
         const nm = el.dataset.delBait;
         if(!removed[fishId]) removed[fishId] = [];
         if(removed[fishId].indexOf(nm) < 0) removed[fishId].push(nm);
+        saveState();
         render();
         Toast.show('已从方案移除：' + nm, 'info');
       });
@@ -463,6 +468,7 @@ const Calc = (() => {
       return;
     }
     render(inp);
+    Store.set('qiaofa_calc_v1', { fish: inp.fishId, month: inp.month, depth: inp.depthKey, depthNum: Utils.$('calcDepthNum').value, bridge: inp.bridgeKey, bridgeNum: Utils.$('calcBridgeNum').value, flow: inp.flow.id, wind: inp.wind.id });
   }
   function bind(){
     Utils.$('calcBtn').addEventListener('click', run);
@@ -785,12 +791,16 @@ const Collapse = (() => {
     });
     btn.textContent = allCollapsed ? '⤵ 全部展开' : '⤴ 全部折叠';
   }
+  const FOLD_KEY = 'qiaofa_fold_v1';
   function setState(id, collapsed){
     const sec = document.getElementById(id);
     if(!sec) return;
     sec.classList.toggle('collapsed', collapsed);
     const head = sec.querySelector('.sec-head');
     if(head) head.setAttribute('aria-expanded', String(!collapsed));
+    const map = Store.get(FOLD_KEY, {});
+    map[id] = collapsed;
+    Store.set(FOLD_KEY, map);
   }
   function expandForHash(hash){
     if(!hash) return;
@@ -825,8 +835,12 @@ const Collapse = (() => {
         if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggle(); }
       });
     });
-    /* 默认全部折叠：打开页面只显示模块标题，点击标题栏展开 */
-    SECTIONS.forEach(id => setState(id, true));
+    /* 折叠状态：优先读取本地记忆，无记录则默认折叠 */
+    const foldMap = Store.get(FOLD_KEY, {});
+    SECTIONS.forEach(id => {
+      if(id in foldMap) setState(id, !!foldMap[id]);
+      else setState(id, true);
+    });
     const allBtn = Utils.$('foldAllBtn');
     if(allBtn){
       allBtn.addEventListener('click', () => {
@@ -868,17 +882,35 @@ const Collapse = (() => {
     const f = DATA.fishProfiles[id];
     return '<option value="' + f.id + '">' + f.name + (f.aliases ? '（' + f.aliases.split(' · ')[0] + '）' : '') + '</option>';
   }).join('');
-  const calcFish = Utils.$('calcFish'), matchFish = Utils.$('matchFish'), targetFish = Utils.$('targetFish'), techFish = Utils.$('techFish'), mybFish = Utils.$('mybFish');
-  if(calcFish){ calcFish.innerHTML = fishOpts; calcFish.value = 'crucian'; }
-  if(matchFish){ matchFish.innerHTML = fishOpts; matchFish.value = 'crucian'; }
-  if(targetFish){ targetFish.innerHTML = fishOpts; targetFish.value = 'crucian'; }
+  const calcFish = Utils.$('calcFish'), matchFish = Utils.$('matchFish'), targetFish = Utils.$('targetFish'), techFish = Utils.$('techFish');
+  const initFish = FishContext.get();
+  if(calcFish){ calcFish.innerHTML = fishOpts; calcFish.value = initFish; }
+  if(matchFish){ matchFish.innerHTML = fishOpts; matchFish.value = initFish; }
+  if(targetFish){ targetFish.innerHTML = fishOpts; targetFish.value = initFish; }
   if(techFish){
     techFish.innerHTML = '<option value="">全部鱼种</option>' + fishOpts;
     techFish.addEventListener('change', e => {
       Tech.render(e.target.value || null);
     });
   }
-  if(mybFish){ mybFish.innerHTML = '<option value="">不限鱼种</option>' + fishOpts; }
+  /* 计算器参数记忆恢复 */
+  (function restoreCalc(){
+    const cState = Store.get('qiaofa_calc_v1', null);
+    if(!cState) return;
+    const cs = Utils.$('calcFish'), cm = Utils.$('calcMonth'), cd = Utils.$('calcDepth'), cdn = Utils.$('calcDepthNum'), cb = Utils.$('calcBridge'), cbn = Utils.$('calcBridgeNum'), cf = Utils.$('calcFlow'), cw = Utils.$('calcWind');
+    if(cs && cState.fish && FISH_ORDER.indexOf(cState.fish) >= 0) cs.value = cState.fish;
+    if(cm && cState.month && cState.month >= 1 && cState.month <= 12){
+      cm.value = String(cState.month);
+      const ms2 = Utils.$('monthMsg');
+      if(ms2) ms2.textContent = '当前：' + cState.month + '月 · ' + ((DATA.monthSeason || {})[cState.month] || '') + '季';
+    }
+    if(cd && cState.depth && cd.querySelector('option[value="' + cState.depth + '"]')) cd.value = cState.depth;
+    if(cdn && cState.depthNum) cdn.value = cState.depthNum;
+    if(cb && cState.bridge && cb.querySelector('option[value="' + cState.bridge + '"]')) cb.value = cState.bridge;
+    if(cbn && cState.bridgeNum) cbn.value = cState.bridgeNum;
+    if(cf && cState.flow && cf.querySelector('option[value="' + cState.flow + '"]')) cf.value = cState.flow;
+    if(cw && cState.wind && cw.querySelector('option[value="' + cState.wind + '"]')) cw.value = cState.wind;
+  })();
   /* 水流 / 风力下拉（计算器） */
   const flowSel = Utils.$('calcFlow'), windSel = Utils.$('calcWind');
   if(flowSel) flowSel.innerHTML = (DATA.flows || []).map(f => '<option value="' + f.id + '">' + Utils.esc(f.name) + '</option>').join('');
