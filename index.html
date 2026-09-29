@@ -691,10 +691,10 @@ tailwind.config = {
  * 单独维护此文件并上传覆盖，即可全站更新数据（页面自动检测新版本）。
  * 字段说明见各区块注释。本文件仅包含数据，不含业务逻辑。
  * ============================================================ */
-window.QIAOFA_DATA_VERSION = '2.2.3';
+window.QIAOFA_DATA_VERSION = '2.2.4';
 
 window.QIAOFA_DATA = {
-  version: '2.2.3',
+  version: '2.2.4',
   updatedAt: '2026-09-23',
 
   /* 月份 → 季节映射（计算器按月份联动季节） */
@@ -1994,7 +1994,7 @@ const Weather = (() => {
  * 模块：BaitMatch / BaitView / Calc / Tech / Search / UI / UpdateCheck / boot
  * ============================================================ */
 
-const APP_VERSION = '2.2.3';
+const APP_VERSION = '2.2.4';
 
 /* ============================================================
  * BaitMatch（配饵中心：经典配方 + 收藏到我的饵料）
@@ -2008,66 +2008,83 @@ const BaitMatch = (() => {
   function comboList(arr, id, cat){
     return cleanList(arr, id).concat((additions[id] || []).filter(a => a.cat === cat && !isRemoved(id, a.name)).map(a => a.name));
   }
-  function baitReview(b){
-    const parts = [];
-    const f = (b.flavor || '') + (b.note || '');
-    if(/腥/.test(f)) parts.push('腥味重：低温/早晚效果好，高温慎用');
-    if(/香/.test(f) && !/腥/.test(f)) parts.push('香型：高温季避杂鱼，广谱稳口');
-    if(/本味|谷物|麸/.test(f)) parts.push('本味/谷物：可作基础饵打底，四季通用');
-    if(/果酸/.test(f)) parts.push('果酸：闷热低压天用，量 1-3%');
-    if(/薯/.test(f)) parts.push('薯味：主攻鲤鱼守大物');
-    if(/玉米|发酵|酵|酒/.test(f)) parts.push('玉米/发酵/酒香：守大物，草鲤青通用');
-    if(/红虫|虾|磷虾|虫/.test(f)) parts.push('高蛋白腥：低温强诱食');
-    if(/奶/.test(f)) parts.push('奶香：钓鲫鱼/生口鱼，黑坑好用');
-    if(/果香|草莓|凤梨|菠萝/.test(f)) parts.push('果香：夏季高温鲤鱼/罗非适用');
-    if(/水母|膨胀|拉大球|昆布|泡泡/.test(f)) parts.push('状态粉：黑坑拉大球/轻口滑鱼神器');
-    const ratio = (b.waterRatio || '').replace(/\s+/g, '');
-    if(/1:0\.[1-5]/.test(ratio)) parts.push('干散水比：适合散炮/搓硬饵');
-    else if(/1:0\.[6-9]/.test(ratio)) parts.push('适中水比：可搓可拉');
-    else if(/1:1/.test(ratio)) parts.push('拉饵水比：出丝充分');
-    if(!parts.length) parts.push('通用型');
-    return parts.join('，');
-  }
   function comboAdvice(mainObjs, stateObjs, addObjs, nestObjs, wd, season){
     const lines = [];
-    const mains = mainObjs.map(b => (b.flavor || '')).join('');
-    const allAdd = addObjs.map(b => (b.name || '')).join('');
-    if(!mainObjs.length){
-      lines.push('⚠️ 方案缺少主攻饵，请至少添加 1-2 款主攻饵');
+    const mains = mainObjs.map(b => (b.flavor || '') + (b.note || '')).join('');
+    const allAdd = addObjs.map(b => (b.name || '') + (b.flavor || '')).join('');
+    const allState = stateObjs.map(b => (b.name || '') + (b.note || '')).join('');
+    const hasRou = /腥/.test(mains) || /红虫/.test(mains) || /虾/.test(mains);
+    const hasDan = /本味|香/.test(mains) && !/腥/.test(mains);
+    const hasGuo = /果酸/.test(allAdd);
+    const hasXia = /虾粉|磷虾/.test(allAdd);
+    const hasQian = /千里香/.test(allAdd);
+    const hasShui = /水母|膨胀|拉大球/.test(allState);
+    const hasQing = /轻麸|雪花|新四季|四季|尺上/.test(allState);
+    const hasLasi = /拉丝|拉大球/.test(allState);
+    const hasNian = /粘粉|麻团/.test(allState);
+
+    if(!wd || typeof wd.temp !== 'number'){
+      lines.push('🌦️ 暂无实时天气数据，无法做天气适配分析，请先刷新天气再生成方案');
+      return lines;
+    }
+    const t = wd.temp;
+
+    /* 温度维度 */
+    if(t < 10){
+      lines.push('❄️ 温度 ' + Math.round(t) + '°C（严寒）：鱼活性极低，适合浓腥/红虫活饵。' + (hasRou ? '✅ 主攻饵偏腥，匹配' : '⚠️ 主攻饵偏淡，低温鱼不开口，建议换浓腥或挂红虫'));
+      if(!hasXia && !hasRou) lines.push('💡 建议添加剂补虾粉/千里香提腥');
+    } else if(t < 15){
+      lines.push('🌡️ 温度 ' + Math.round(t) + '°C（偏凉）：腥香 7:3。' + (hasRou ? '✅ 偏腥配置合适' : (hasDan ? '⚠️ 偏淡了，建议加腥或补虾粉' : '➖ 中性配置，可加虾粉提腥')));
+    } else if(t <= 28){
+      lines.push('🌤️ 温度 ' + Math.round(t) + '°C（适宜）：腥香均衡。' + (hasRou && hasDan ? '✅ 腥香兼备，匹配' : (hasRou ? '⚠️ 偏腥，正午杂鱼会闹，可备一款本味饵' : '✅ 本味配置合适')));
+    } else if(t <= 33){
+      lines.push('☀️ 温度 ' + Math.round(t) + '°C（偏热）：宜本味/谷物。' + (hasRou ? '⚠️ 你的饵偏腥，高温招杂鱼，建议换本味+少量果酸' : '✅ 清淡配置合适'));
     } else {
-      mainObjs.forEach(function(b){ lines.push('🍚 主攻「' + (b.name || '?') + '」：' + baitReview(b)); });
-      if(mainObjs.length >= 2 && /腥/.test(mains) && /香/.test(mains) && /果酸|本味/.test(mains)) lines.push('💡 主攻饵味型偏杂，建议以 1 款主味为主，其余辅助');
-      if(mainObjs.length > 3) lines.push('⚠️ 主攻饵超过 3 款，状态难统一，建议精简');
+      lines.push('🔥 温度 ' + Math.round(t) + '°C（酷热）：钓桥底阴凉。' + (hasRou ? '⚠️ 偏腥在酷热天易招杂鱼，强烈建议本味+果酸' : '✅ 清淡配置合适'));
     }
-    if(!stateObjs.length){
-      lines.push('🧪 未配状态饵：做拉饵加拉丝粉/水母粉；钓滑口轻口加轻麸/新四季/膨胀粉减比重');
-    } else {
-      stateObjs.forEach(function(b){ lines.push('🧪 状态「' + (b.name || '?') + '」：' + baitReview(b)); });
+
+    /* 湿度维度 */
+    if(wd.hum != null){
+      if(wd.hum > 85) lines.push('💧 湿度 ' + Math.round(wd.hum) + '%：高湿易返水。' + (hasNian ? '✅ 有粘粉/麻团可压返水' : '⚠️ 建议饵开干散、少开勤开，可备粘粉'));
+      else if(wd.hum < 45) lines.push('💨 湿度 ' + Math.round(wd.hum) + '%：干燥。' + (hasShui || hasQing ? '✅ 有状态粉控制状态' : '➖ 注意及时补窝补水'));
     }
-    if(!addObjs.length){
-      lines.push('💧 未加添加剂：天气正常可不加，更省钱更稳');
-    } else {
-      addObjs.forEach(function(b){ lines.push('💧 添加「' + (b.name || '?') + '」：' + baitReview(b)); });
-      if(/虾粉/.test(allAdd) && /千里香/.test(allAdd)) lines.push('⚠️ 虾粉+千里香都是强腥增诱，建议二选一防死窝');
-      if(/果酸/.test(allAdd) && /千里香/.test(allAdd)) lines.push('💡 果酸+千里香：一清一腥，建议分开时段用（白天果酸/早晚千里香）');
-      if(/猪母乳/.test(allAdd) && /红薯膏|大麦/.test(allAdd)) lines.push('💡 猪母乳+薯麦膏：黑坑鲤经典组合，注意总量宁少勿多');
-      if(addObjs.length > 2) lines.push('⚠️ 添加剂超过 2 款，味型太杂易死窝，建议精简');
+
+    /* 气压维度 */
+    if(wd.press != null){
+      if(wd.press < 1000){
+        lines.push('💨 气压 ' + Math.round(wd.press) + 'hPa（低压）：鱼易上浮、开口差。' + (hasGuo ? '✅ 有果酸适配' : '⚠️ 建议加果酸开胃，并改钓半水/搜层'));
+      } else if(wd.press <= 1022){
+        lines.push('📈 气压 ' + Math.round(wd.press) + 'hPa（适宜）：鱼口活跃。' + (nestObjs.length ? '✅ 可大胆打窝守钓' : '➖ 建议配窝料留鱼更久'));
+      } else {
+        lines.push('📈 气压 ' + Math.round(wd.press) + 'hPa（高压）：鱼活跃度高，钓深水更稳');
+      }
     }
-    if(!nestObjs.length){
-      lines.push('🎯 未配窝料：野钓建议配酒米/玉米/菜籽饼打窝留鱼；窝饵味型尽量与钓饵一致');
-    } else {
-      nestObjs.forEach(function(b){ lines.push('🎯 窝料「' + (b.name || '?') + '」：' + baitReview(b)); });
-      if(nestObjs.length > 2) lines.push('⚠️ 窝料偏多，野钓窝量适中即可，避免重窝惊鱼');
+
+    /* 风力维度 */
+    if(wd.wind != null){
+      if(wd.wind < 8){
+        lines.push('🍃 静风：可轻铅灵敏钓底。' + (hasLasi || hasShui ? '✅ 拉饵/状态配置合适' : '➖ 可加状态饵做拉饵放大口'));
+      } else if(wd.wind < 20){
+        lines.push('🌬️ 轻风 ' + Math.round(wd.wind) + 'km/h：正常作钓。' + (hasNian ? '✅ 有粘粉可防风线摆动' : '➖ 风线摆动大可备粘粉/搓硬饵'));
+      } else if(wd.wind < 29){
+        lines.push('🌪️ 和风 ' + Math.round(wd.wind) + 'km/h：需搓硬饵减雾化。' + (hasNian ? '✅ 有粘粉/麻团合适' : '⚠️ 建议加粘粉或搓硬饵，并加重铅 10g 绷紧风线'));
+      } else {
+        lines.push('🌀 大风 ' + Math.round(wd.wind) + 'km/h：不建议出钓；若坚持需粗稍重铅+背风位+大跑铅守底，饵用粘麻团');
+      }
     }
-    if(wd){
-      if(wd.temp > 30 && /腥/.test(mains)) lines.push('⚠️ 今天高温（' + Math.round(wd.temp) + '°C），这套饵偏腥易招杂鱼，建议换本味/谷物或只钓早晚');
-      if(wd.temp < 10 && !/红虫|虾|磷虾/.test(mains + allAdd)) lines.push('❄️ 今天低温（' + Math.round(wd.temp) + '°C），建议加虾粉/红虫，浓腥才开口');
-      if(wd.press && wd.press < 1000 && !/果酸/.test(allAdd)) lines.push('💨 今天低压，加少量果酸促进开口');
-      if(wd.hum && wd.hum > 85) lines.push('💧 今天湿度大，饵开干散防返水，少开勤开');
-      if(wd.wind && wd.wind >= 20) lines.push('🌬️ 今天风大，搓硬饵+粘粉减雾化，加重铅到底');
-      if(wd.precipProb && wd.precipProb > 60) lines.push('🌧️ 今天降水概率高，雨前腥饵口快，雷雨禁钓');
+
+    /* 降水维度 */
+    if(wd.precipProb != null){
+      if(wd.precipProb <= 10) lines.push('☀️ 降水概率低：可正常打窝，全天安排');
+      else if(wd.precipProb <= 40) lines.push('⛅ 少量降水：备好雨具，雨停后口好');
+      else if(wd.precipProb <= 70) lines.push('🌧️ 降水概率 ' + wd.precipProb + '%：雨前腥饵口快。' + (hasRou ? '✅ 偏腥配置正好' : '⚠️ 可备一款腥饵迎接雨前窗口'));
+      else lines.push('⛈️ 高降水 ' + wd.precipProb + '%：雷雨禁钓，雨停 1-2 小时口最佳');
     }
-    if(season === '冬' && !/腥/.test(mains)) lines.push('❄️ 冬季本味主攻饵偏淡，建议混配浓腥或活饵');
+
+    /* 综合结论 */
+    const issues = lines.filter(l => l.indexOf('⚠️') >= 0).length;
+    if(issues === 0) lines.push('🟢 综合：当前搭配与今天天气匹配度良好，按标注水比开饵即可');
+    else lines.push('🟡 综合：有 ' + issues + ' 项与今天天气不匹配，按上方 ⚠️ 建议调整后更稳');
     lines.push('🟢 开饵流程：按各款标注水比加水，快搅静置 3-5 分钟后轻揉成团，1 小时内用完');
     return lines;
   }
@@ -2144,7 +2161,7 @@ const BaitMatch = (() => {
       '<input id="addBaitInput" placeholder="输入饵料名称（如：野战蓝鲫）" autocomplete="off">' +
       '<select id="addBaitCat"><option value="main">主攻饵</option><option value="state">状态饵</option><option value="add">添加剂</option><option value="nest">窝料</option></select>' +
       '<button id="addBaitBtn">添加</button></div>';
-    const comboHtml = '<div class="combo-advice"><b>💡 你的搭配建议：</b><ul>' + comboAdvice(mainObjs, stateObjs, addObjs, nestObjs, wd, season).map(function(t){ return '<li>' + Utils.esc(t) + '</li>'; }).join('') + '</ul></div>';
+    const comboHtml = '<div class="combo-advice"><b>💡 天气适配分析（这套饵今天适用吗）：</b><ul>' + comboAdvice(mainObjs, stateObjs, addObjs, nestObjs, wd, season).map(function(t){ return '<li>' + Utils.esc(t) + '</li>'; }).join('') + '</ul></div>';
     box.innerHTML = wdHtml + addbarHtml +
       '<div style="margin-bottom:6px;display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap;">' +
         ((removedCnt || addedCnt) ? '<span style="font-size:.76rem;color:var(--muted);align-self:center;">已移除 ' + removedCnt + ' 款 / 已添加 ' + addedCnt + ' 款，可重置恢复</span>' : '') +
