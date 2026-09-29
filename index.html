@@ -691,10 +691,10 @@ tailwind.config = {
  * 单独维护此文件并上传覆盖，即可全站更新数据（页面自动检测新版本）。
  * 字段说明见各区块注释。本文件仅包含数据，不含业务逻辑。
  * ============================================================ */
-window.QIAOFA_DATA_VERSION = '2.2.2';
+window.QIAOFA_DATA_VERSION = '2.2.3';
 
 window.QIAOFA_DATA = {
-  version: '2.2.2',
+  version: '2.2.3',
   updatedAt: '2026-09-23',
 
   /* 月份 → 季节映射（计算器按月份联动季节） */
@@ -1308,7 +1308,28 @@ window.QIAOFA_DATA = {
     { brand:'通用', name:'原塘颗粒', cat:'窝料', flavor:'本味', target:['鲤鱼','草鱼','鲫鱼'], seasons:['春','夏','秋'], scene:'黑坑/野钓', waterRatio:'直接打窝或泡水搓散', note:'黑坑滑鱼最认，泡散后混合商品饵' },
     { brand:'通用', name:'红虫颗粒', cat:'窝料', flavor:'红虫腥', target:['鲫鱼','鲤鱼','黄颡'], seasons:['冬','春'], scene:'野钓', waterRatio:'直接打窝，窝量少勤补', note:'冬季桥筏打窝佳品，配酒米用' },
     { brand:'通用', name:'发酵麦粒', cat:'玉米麦粒', flavor:'酵香', target:['鲤鱼','草鱼','青鱼'], seasons:['夏','秋'], scene:'野钓守大物', waterRatio:'开袋即用，打窝挂钩两用', note:'发酵酵香大颗粒，守钓大物' },
-    { brand:'通用', name:'麸皮团', cat:'窝料', flavor:'本味', target:['草鱼','鳊鱼','鲤鱼'], seasons:['春','夏','秋'], scene:'野钓', waterRatio:'麸皮+玉米粉+水 捏团', note:'经济自制窝，雾化诱草鳊' }
+    { brand:'通用', name:'麸皮团', cat:'窝料', flavor:'本味', target:['草鱼','鳊鱼','鲤鱼'], seasons:['春','夏','秋'], scene:'野钓', waterRatio:'麸皮+玉米粉+水 捏团', note:'经济自制窝，雾化诱草鳊' },
+    /* ---------- 状态饵扩充（抖音/黑坑热门，v2.2.3 入库） ---------- */
+    { brand:'钓鱼王', name:'水母状态粉', cat:'状态饵', flavor:'本味', target:['鲫鱼','鲤鱼'], seasons:['春','夏','秋','冬'], scene:'黑坑/野钓', waterRatio:'黄面面150ml+水母粉5g+水300ml，静置3-5分钟', note:'黑坑拉大球神器：配小米拉饵/红虫伴侣/泡泡球，饵如活水母轻盈蓬松、入口顺滑' },
+    { brand:'通用', name:'膨胀粉', cat:'状态饵', flavor:'本味', target:['鲫鱼','鲤鱼'], seasons:['春','夏','秋','冬'], scene:'黑坑/竞技', waterRatio:'开泡泡球水比 1:1 以上（吸水率高）', note:'遇水膨胀 5 倍+，大幅降比重防饵陷淤泥；钓滑口/轻口好用' },
+    { brand:'通用', name:'拉大球（网状拉丝）', cat:'状态饵', flavor:'本味', target:['鲫鱼','鲤鱼'], seasons:['春','夏','秋','冬'], scene:'黑坑/竞技', waterRatio:'按总饵量 10-15% 添加', note:'升级版拉丝粉，网状快速拉大饵，附钩性极强' },
+    { brand:'通用', name:'昆布丝', cat:'状态饵', flavor:'本味', target:['鲫鱼'], seasons:['春','夏','秋','冬'], scene:'黑坑', waterRatio:'水拉饵昆布丝拉酒米，按说明使用', note:'黑坑拉酒米/拉红虫伴侣，入口性极佳' },
+    { brand:'通用', name:'玉米粘粉（麻团伴侣）', cat:'状态饵', flavor:'本味', target:['鲤鱼','草鱼'], seasons:['春','夏','秋'], scene:'黑坑/野钓', waterRatio:'搓饵外蘸颗粒使用', note:'粘麻团专用：搓饵蘸颗粒，诱钓结合守大物' },
+    { brand:'通用', name:'泡泡球', cat:'状态饵', flavor:'本味', target:['鲤鱼','鲫鱼'], seasons:['春','夏','秋'], scene:'黑坑', waterRatio:'水比 1:0.75-1，加膨胀粉调状态', note:'黑坑滑鱼/回锅鱼克星，比重轻入口好' },
+    /* ---------- 添加剂扩充（黑坑小药，v2.2.3 入库） ---------- */
+    { brand:'通用', name:'猪母乳', cat:'添加剂', flavor:'奶香甜', target:['鲫鱼','鲤鱼'], seasons:['冬','春'], scene:'黑坑/野钓', waterRatio:'1-2 挖耳勺即可，宁少勿多', note:'奶香甜诱鱼，低温/水污染塘/鱼不开口时用；加多易死窝' },
+    { brand:'通用', name:'大麦红薯膏', cat:'添加剂', flavor:'麦香薯香', target:['鲤鱼','草鱼','鲫鱼'], seasons:['春','夏','秋'], scene:'黑坑/野钓', waterRatio:'开饵按 1-2% 添加', note:'钓鲤鱼最广谱小药，麦薯香通杀鲤草；黑坑鲤必配' },
+    { brand:'通用', name:'鱼开胃', cat:'添加剂', flavor:'乳香微酸', target:['鲫鱼','鲤鱼'], seasons:['春','秋','冬'], scene:'黑坑', waterRatio:'按 0.5-1% 添加', note:'天然酵素促开口，低温/回锅鱼效果好，过量适得其反' },
+    { brand:'通用', name:'凤梨香精', cat:'添加剂', flavor:'果香', target:['鲤鱼','草鱼','罗非'], seasons:['夏'], scene:'黑坑/野钓', waterRatio:'开饵按 1-2% 添加', note:'菠萝果香，夏季高温鱼不开口时用' },
+    { brand:'通用', name:'老冰棍', cat:'添加剂', flavor:'香甜', target:['鲫鱼','鲤鱼'], seasons:['夏','秋'], scene:'黑坑', waterRatio:'2-5 挖耳勺', note:'夏秋大鲫大鲤特效，增甜适口' },
+    { brand:'通用', name:'聚鱼素', cat:'添加剂', flavor:'浓缩香精', target:['鲫鱼','鲤鱼'], seasons:['春','秋','冬'], scene:'黑坑', waterRatio:'散炮必加，少量', note:'穿透力极强，与千里香同属浓缩诱鱼剂，二选一即可' },
+    { brand:'通用', name:'麝香酒 / 丁香酒', cat:'添加剂', flavor:'药酒香', target:['鲤鱼','鲫鱼'], seasons:['春','秋','冬'], scene:'黑坑/野钓', waterRatio:'开饵按 1-2 滴，泡酒米更佳', note:'酒香诱大鲤，冬季发窝慢但留鱼久' },
+    { brand:'通用', name:'黑糖膏', cat:'添加剂', flavor:'焦糖甜', target:['鲤鱼'], seasons:['夏','秋'], scene:'黑坑', waterRatio:'开饵按 1-2% 添加', note:'甜味主攻鲤，配薯麦膏效果更佳' },
+    /* ---------- 窝料扩充（v2.2.3 入库） ---------- */
+    { brand:'通用', name:'螺蛳', cat:'窝料', flavor:'本味', target:['青鱼','鲤鱼'], seasons:['春','夏','秋'], scene:'野钓守大物', waterRatio:'敲碎后打窝', note:'青鱼最爱（螺蛳青），敲碎打窝诱大青' },
+    { brand:'通用', name:'酒泡麦粒', cat:'玉米麦粒', flavor:'酵香酒香', target:['鲤鱼','草鱼','鲫鱼'], seasons:['春','秋','冬'], scene:'野钓', waterRatio:'麦粒煮8成熟+高粱酒+蜂蜜+维B2，密封3天', note:'自制配方：酵香穿透强，留鱼 4 小时+，防小杂鱼' },
+    { brand:'通用', name:'商品腥香颗粒', cat:'窝料', flavor:'腥香', target:['鲫鱼','鲤鱼'], seasons:['春','秋','冬'], scene:'野钓/黑坑', waterRatio:'直接打窝或泡水', note:'野钓通杀鲫鲤，黑坑用原塘颗粒更稳' },
+    { brand:'通用', name:'红薯丁', cat:'窝料', flavor:'薯香甜', target:['鲤鱼'], seasons:['夏','秋'], scene:'野钓守大物', waterRatio:'红薯蒸7成熟切丁打窝', note:'守大鲤经典自制窝，配合红薯饵钓' }
   ],
 
   /* ============================================================
@@ -1973,7 +1994,7 @@ const Weather = (() => {
  * 模块：BaitMatch / BaitView / Calc / Tech / Search / UI / UpdateCheck / boot
  * ============================================================ */
 
-const APP_VERSION = '2.2.2';
+const APP_VERSION = '2.2.3';
 
 /* ============================================================
  * BaitMatch（配饵中心：经典配方 + 收藏到我的饵料）
@@ -1985,24 +2006,69 @@ const BaitMatch = (() => {
   const removed = {};
   const additions = {};
   function comboList(arr, id, cat){
-    return cleanList(arr, id).concat((additions[id] || []).filter(a => a.cat === cat).map(a => a.name));
+    return cleanList(arr, id).concat((additions[id] || []).filter(a => a.cat === cat && !isRemoved(id, a.name)).map(a => a.name));
+  }
+  function baitReview(b){
+    const parts = [];
+    const f = (b.flavor || '') + (b.note || '');
+    if(/腥/.test(f)) parts.push('腥味重：低温/早晚效果好，高温慎用');
+    if(/香/.test(f) && !/腥/.test(f)) parts.push('香型：高温季避杂鱼，广谱稳口');
+    if(/本味|谷物|麸/.test(f)) parts.push('本味/谷物：可作基础饵打底，四季通用');
+    if(/果酸/.test(f)) parts.push('果酸：闷热低压天用，量 1-3%');
+    if(/薯/.test(f)) parts.push('薯味：主攻鲤鱼守大物');
+    if(/玉米|发酵|酵|酒/.test(f)) parts.push('玉米/发酵/酒香：守大物，草鲤青通用');
+    if(/红虫|虾|磷虾|虫/.test(f)) parts.push('高蛋白腥：低温强诱食');
+    if(/奶/.test(f)) parts.push('奶香：钓鲫鱼/生口鱼，黑坑好用');
+    if(/果香|草莓|凤梨|菠萝/.test(f)) parts.push('果香：夏季高温鲤鱼/罗非适用');
+    if(/水母|膨胀|拉大球|昆布|泡泡/.test(f)) parts.push('状态粉：黑坑拉大球/轻口滑鱼神器');
+    const ratio = (b.waterRatio || '').replace(/\s+/g, '');
+    if(/1:0\.[1-5]/.test(ratio)) parts.push('干散水比：适合散炮/搓硬饵');
+    else if(/1:0\.[6-9]/.test(ratio)) parts.push('适中水比：可搓可拉');
+    else if(/1:1/.test(ratio)) parts.push('拉饵水比：出丝充分');
+    if(!parts.length) parts.push('通用型');
+    return parts.join('，');
   }
   function comboAdvice(mainObjs, stateObjs, addObjs, nestObjs, wd, season){
     const lines = [];
-    const allAdd = addObjs.map(b => b.name || '').join('');
-    if(!mainObjs.length) lines.push('⚠️ 方案缺少主攻饵，建议至少保留 1-2 款主攻饵');
-    else {
-      const flavors = mainObjs.map(b => (b.flavor || '')).join('');
-      if(wd && wd.temp > 30 && /腥/.test(flavors)) lines.push('⚠️ 当前高温，主攻饵偏腥易招杂鱼，建议换本味/谷物或减腥加香');
-      if(wd && wd.temp < 10 && /本味|香/.test(flavors) && !/腥/.test(flavors)) lines.push('💡 当前低温，主攻饵偏淡，建议加虾粉/红虫增腥');
+    const mains = mainObjs.map(b => (b.flavor || '')).join('');
+    const allAdd = addObjs.map(b => (b.name || '')).join('');
+    if(!mainObjs.length){
+      lines.push('⚠️ 方案缺少主攻饵，请至少添加 1-2 款主攻饵');
+    } else {
+      mainObjs.forEach(function(b){ lines.push('🍚 主攻「' + (b.name || '?') + '」：' + baitReview(b)); });
+      if(mainObjs.length >= 2 && /腥/.test(mains) && /香/.test(mains) && /果酸|本味/.test(mains)) lines.push('💡 主攻饵味型偏杂，建议以 1 款主味为主，其余辅助');
+      if(mainObjs.length > 3) lines.push('⚠️ 主攻饵超过 3 款，状态难统一，建议精简');
     }
-    if(!stateObjs.length) lines.push('💡 未配状态饵：钓滑口/轻口建议加轻麸或新四季减比重；做拉饵加拉丝粉');
-    if(addObjs.length > 2) lines.push('⚠️ 添加剂超过 2 款，味型太杂易死窝，建议精简保留 1-2 款');
-    if(wd && wd.press && wd.press < 1000 && !/果酸/.test(allAdd)) lines.push('💡 当前低压闷热，建议加少量果酸促开口');
-    if(wd && wd.temp < 10 && !/虾粉|红虫|千里香/.test(allAdd)) lines.push('💡 当前低温，添加剂可加虾粉/千里香增强诱食');
-    if(!nestObjs.length && season !== '夏') lines.push('💡 未配窝料，野钓建议配酒米/玉米打窝，留鱼更久');
-    if(nestObjs.length > 2) lines.push('⚠️ 窝料偏多，野钓窝量适中即可，避免重窝惊鱼');
-    lines.push('🟢 开饵：按各款饵标注水比加开饵水，快搅静置 3-5 分钟后轻揉成团，1 小时内用完');
+    if(!stateObjs.length){
+      lines.push('🧪 未配状态饵：做拉饵加拉丝粉/水母粉；钓滑口轻口加轻麸/新四季/膨胀粉减比重');
+    } else {
+      stateObjs.forEach(function(b){ lines.push('🧪 状态「' + (b.name || '?') + '」：' + baitReview(b)); });
+    }
+    if(!addObjs.length){
+      lines.push('💧 未加添加剂：天气正常可不加，更省钱更稳');
+    } else {
+      addObjs.forEach(function(b){ lines.push('💧 添加「' + (b.name || '?') + '」：' + baitReview(b)); });
+      if(/虾粉/.test(allAdd) && /千里香/.test(allAdd)) lines.push('⚠️ 虾粉+千里香都是强腥增诱，建议二选一防死窝');
+      if(/果酸/.test(allAdd) && /千里香/.test(allAdd)) lines.push('💡 果酸+千里香：一清一腥，建议分开时段用（白天果酸/早晚千里香）');
+      if(/猪母乳/.test(allAdd) && /红薯膏|大麦/.test(allAdd)) lines.push('💡 猪母乳+薯麦膏：黑坑鲤经典组合，注意总量宁少勿多');
+      if(addObjs.length > 2) lines.push('⚠️ 添加剂超过 2 款，味型太杂易死窝，建议精简');
+    }
+    if(!nestObjs.length){
+      lines.push('🎯 未配窝料：野钓建议配酒米/玉米/菜籽饼打窝留鱼；窝饵味型尽量与钓饵一致');
+    } else {
+      nestObjs.forEach(function(b){ lines.push('🎯 窝料「' + (b.name || '?') + '」：' + baitReview(b)); });
+      if(nestObjs.length > 2) lines.push('⚠️ 窝料偏多，野钓窝量适中即可，避免重窝惊鱼');
+    }
+    if(wd){
+      if(wd.temp > 30 && /腥/.test(mains)) lines.push('⚠️ 今天高温（' + Math.round(wd.temp) + '°C），这套饵偏腥易招杂鱼，建议换本味/谷物或只钓早晚');
+      if(wd.temp < 10 && !/红虫|虾|磷虾/.test(mains + allAdd)) lines.push('❄️ 今天低温（' + Math.round(wd.temp) + '°C），建议加虾粉/红虫，浓腥才开口');
+      if(wd.press && wd.press < 1000 && !/果酸/.test(allAdd)) lines.push('💨 今天低压，加少量果酸促进开口');
+      if(wd.hum && wd.hum > 85) lines.push('💧 今天湿度大，饵开干散防返水，少开勤开');
+      if(wd.wind && wd.wind >= 20) lines.push('🌬️ 今天风大，搓硬饵+粘粉减雾化，加重铅到底');
+      if(wd.precipProb && wd.precipProb > 60) lines.push('🌧️ 今天降水概率高，雨前腥饵口快，雷雨禁钓');
+    }
+    if(season === '冬' && !/腥/.test(mains)) lines.push('❄️ 冬季本味主攻饵偏淡，建议混配浓腥或活饵');
+    lines.push('🟢 开饵流程：按各款标注水比加水，快搅静置 3-5 分钟后轻揉成团，1 小时内用完');
     return lines;
   }
   function seasonOf(m){ return (DATA.monthSeason || {})[m] || '夏'; }
