@@ -142,6 +142,7 @@ const Weather = (() => {
   let isOffline = false;
   let reqSeq = 0;
   let lastUpdate = null;
+  let lastData = null;
 
   function codeText(c){
     if(c===0) return '晴'; if(c===1) return '基本晴朗'; if(c===2) return '多云'; if(c===3) return '阴';
@@ -279,6 +280,7 @@ const Weather = (() => {
       precipProb: days.precipitation_probability_max[0] || 0, press: data.current.surface_pressure, hum: data.current.relative_humidity_2m }));
     Utils.$('offlineTip').hidden = !isOffline;
     Utils.$('wbMeta').textContent = metaText('openmeteo');
+    lastData = { temp: data.current.temperature_2m, press: data.current.surface_pressure, hum: data.current.relative_humidity_2m, wind: data.current.wind_speed_10m, precipProb: days.precipitation_probability_max[0] || 0, src:'openmeteo' };
     Bridge.post('weather', { city: currentCity.name, temp: Math.round(data.current.temperature_2m), score });
   }
   function renderAmap(j){
@@ -307,6 +309,7 @@ const Weather = (() => {
     renderScore(score, genTips({ wind: windKmh, temp: parseFloat(live.temperature), precipProb: 20, press: 1013, hum: parseFloat(live.humidity || '60') }));
     Utils.$('offlineTip').hidden = true;
     Utils.$('wbMeta').textContent = metaText('amap');
+    lastData = { temp: parseFloat(live.temperature), press: 1013, hum: parseFloat(live.humidity || '60'), wind: windKmh, precipProb: 20, src:'amap' };
     Bridge.post('weather', { city: currentCity.name, temp: live.temperature, score });
   }
   function renderQw(j){
@@ -329,6 +332,7 @@ const Weather = (() => {
       precipProb: 20, press: curPress != null ? curPress : 1013, hum: curHum != null ? curHum : 60 }));
     Utils.$('offlineTip').hidden = true;
     Utils.$('wbMeta').textContent = metaText('qweather');
+    lastData = { temp: curTemp != null ? curTemp : 20, press: curPress != null ? curPress : 1013, hum: curHum != null ? curHum : 60, wind: curWind != null ? curWind : 5, precipProb: 20, src:'qweather' };
     Bridge.post('weather', { city: currentCity.name, temp: curTemp != null ? Math.round(curTemp) : null, score });
   }
   async function loadWeather(lat, lon){
@@ -599,5 +603,5 @@ const Weather = (() => {
       if(currentCity && currentCity.lat) loadWeather(currentCity.lat, currentCity.lon);
     });
   }
-  return { init, bind, getCity, getCfg, setCfg, loadWeather, yibinDistricts, nearestDistrict };
+  return { init, bind, getCity, getCfg, setCfg, loadWeather, yibinDistricts, nearestDistrict, getLastData: function(){ return lastData; } };
 })();
