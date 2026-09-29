@@ -379,12 +379,22 @@ tailwind.config = {
   /* 配饵方案：移除按钮 */
   .match-item .b-del{background:none;border:none;color:var(--danger);font-size:.9rem;cursor:pointer;margin-left:4px;padding:0 3px;}
   .match-item .b-del:hover{color:#dc2626;font-weight:800;}
-  /* 天气配饵建议 + 自定义饵料建议 */
+  /* 天气配饵建议 + 搭配建议 + 添加饵料条 */
   .weather-bait-advice{background:#e0f2fe;border:1px solid #bae6fd;border-left:4px solid #0ea5e9;border-radius:10px;padding:10px 14px;font-size:.86rem;color:#075985;margin-bottom:12px;line-height:1.8;}
   html.dark .weather-bait-advice{background:#0c2a3e;border-color:#0369a1;color:#7dd3fc;}
   .weather-bait-advice b{font-weight:700;}
-  .mb-advice{flex-basis:100%;font-size:.78rem;color:#0d5f52;background:#eef7f1;border-radius:8px;padding:6px 10px;line-height:1.7;}
-  html.dark .mb-advice{background:#16213a;color:#6ee7b7;}
+  .weather-bait-advice ul{margin-top:4px;}
+  .weather-bait-advice li{margin-left:18px;margin-bottom:3px;}
+  .bait-addbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:.85rem;color:#075985;}
+  html.dark .bait-addbar{background:#0c2a3e;border-color:#0369a1;color:#7dd3fc;}
+  .bait-addbar input{flex:1;min-width:120px;border:1px solid #bae6fd;border-radius:8px;padding:9px 10px;font-size:15px;outline:none;min-height:44px;}
+  .bait-addbar select{border:1px solid #bae6fd;border-radius:8px;padding:9px 8px;font-size:14px;outline:none;min-height:44px;}
+  .bait-addbar button{border:none;border-radius:8px;background:#0ea5e9;color:#fff;font-weight:700;padding:0 18px;min-height:44px;cursor:pointer;}
+  .combo-advice{background:#fefce8;border:1px solid #fde68a;border-left:4px solid #f59e0b;border-radius:10px;padding:10px 14px;font-size:.85rem;color:#713f12;margin-top:12px;line-height:1.8;}
+  html.dark .combo-advice{background:#3a2f14;border-color:#a8702c;color:#fbbf24;}
+  .combo-advice b{font-weight:700;}
+  .combo-advice ul{margin-top:4px;}
+  .combo-advice li{margin-left:18px;margin-bottom:3px;}
 </style>
 </head>
 <body>
@@ -585,17 +595,6 @@ tailwind.config = {
       </div>
       <div id="matchResult"></div>
 
-      <h3 class="sub">🎒 我的饵料库（自行添加 · 本地保存）</h3>
-      <div class="mybaits-form">
-        <input id="mybName" placeholder="饵料名称，如：自制玉米面" autocomplete="off">
-        <input id="mybBrand" placeholder="品牌 / 自制" autocomplete="off">
-        <input id="mybFlavor" placeholder="味型，如：奶香" autocomplete="off">
-        <input id="mybRatio" placeholder="配比/水比，如 1:0.9" autocomplete="off">
-        <select id="mybFish"></select>
-        <div class="mb-btn"><button id="mybAdd">＋ 添加到我的饵料库</button></div>
-      </div>
-      <div class="mybaits-list" id="mybList"><div class="mb-empty">还没有自定义饵料，添加后会显示在这里</div></div>
-
       <h3 class="sub">📚 饵料库参考（市面主流 · 含开饵水比）</h3>
       <div class="classic-card">
         <h4>⭐ 经典配方速查（按鱼种）</h4>
@@ -692,10 +691,10 @@ tailwind.config = {
  * 单独维护此文件并上传覆盖，即可全站更新数据（页面自动检测新版本）。
  * 字段说明见各区块注释。本文件仅包含数据，不含业务逻辑。
  * ============================================================ */
-window.QIAOFA_DATA_VERSION = '2.2.1';
+window.QIAOFA_DATA_VERSION = '2.2.2';
 
 window.QIAOFA_DATA = {
-  version: '2.2.1',
+  version: '2.2.2',
   updatedAt: '2026-09-23',
 
   /* 月份 → 季节映射（计算器按月份联动季节） */
@@ -1971,10 +1970,10 @@ const Weather = (() => {
 /* ============================================================
  * 桥筏钓鱼全攻略 v2 · app2.js（业务模块二）
  * 依赖 app.js 中的 DATA / Utils / Store / Toast / FishContext / Weather
- * 模块：BaitMatch / MyBaits / BaitView / Calc / Tech / Search / UI / UpdateCheck / boot
+ * 模块：BaitMatch / BaitView / Calc / Tech / Search / UI / UpdateCheck / boot
  * ============================================================ */
 
-const APP_VERSION = '2.2.1';
+const APP_VERSION = '2.2.2';
 
 /* ============================================================
  * BaitMatch（配饵中心：经典配方 + 收藏到我的饵料）
@@ -1984,21 +1983,61 @@ const BaitMatch = (() => {
   let month = new Date().getMonth() + 1;
   let env = 'wild';
   const removed = {};
+  const additions = {};
+  function comboList(arr, id, cat){
+    return cleanList(arr, id).concat((additions[id] || []).filter(a => a.cat === cat).map(a => a.name));
+  }
+  function comboAdvice(mainObjs, stateObjs, addObjs, nestObjs, wd, season){
+    const lines = [];
+    const allAdd = addObjs.map(b => b.name || '').join('');
+    if(!mainObjs.length) lines.push('⚠️ 方案缺少主攻饵，建议至少保留 1-2 款主攻饵');
+    else {
+      const flavors = mainObjs.map(b => (b.flavor || '')).join('');
+      if(wd && wd.temp > 30 && /腥/.test(flavors)) lines.push('⚠️ 当前高温，主攻饵偏腥易招杂鱼，建议换本味/谷物或减腥加香');
+      if(wd && wd.temp < 10 && /本味|香/.test(flavors) && !/腥/.test(flavors)) lines.push('💡 当前低温，主攻饵偏淡，建议加虾粉/红虫增腥');
+    }
+    if(!stateObjs.length) lines.push('💡 未配状态饵：钓滑口/轻口建议加轻麸或新四季减比重；做拉饵加拉丝粉');
+    if(addObjs.length > 2) lines.push('⚠️ 添加剂超过 2 款，味型太杂易死窝，建议精简保留 1-2 款');
+    if(wd && wd.press && wd.press < 1000 && !/果酸/.test(allAdd)) lines.push('💡 当前低压闷热，建议加少量果酸促开口');
+    if(wd && wd.temp < 10 && !/虾粉|红虫|千里香/.test(allAdd)) lines.push('💡 当前低温，添加剂可加虾粉/千里香增强诱食');
+    if(!nestObjs.length && season !== '夏') lines.push('💡 未配窝料，野钓建议配酒米/玉米打窝，留鱼更久');
+    if(nestObjs.length > 2) lines.push('⚠️ 窝料偏多，野钓窝量适中即可，避免重窝惊鱼');
+    lines.push('🟢 开饵：按各款饵标注水比加开饵水，快搅静置 3-5 分钟后轻揉成团，1 小时内用完');
+    return lines;
+  }
   function seasonOf(m){ return (DATA.monthSeason || {})[m] || '夏'; }
   function weatherAdvice(w){
-    if(!w || typeof w.temp !== 'number') return '（暂无实时天气数据，按当前季节常规搭配）';
+    if(!w || typeof w.temp !== 'number') return ['暂无实时天气数据，按当前季节常规搭配'];
     const tips = [];
     const t = w.temp;
-    if(t < 10) tips.push('❄️ 低温' + Math.round(t) + '°C：主攻浓腥/红虫活饵，添加剂用虾粉/千里香，少打窝勤逗钓');
-    else if(t < 15) tips.push('🌡️ ' + Math.round(t) + '°C 偏凉：腥香为主，可加 10-20% 虾粉，红虫/蚯蚓备选');
-    else if(t <= 28) tips.push('🌤️ ' + Math.round(t) + '°C 温度适宜：腥香均衡，经典老三样正合适，可搓可拉');
-    else if(t <= 33) tips.push('☀️ ' + Math.round(t) + '°C 偏热：清淡本味/谷物为主，避腥避杂鱼，加少量果酸');
-    else tips.push('🔥 ' + Math.round(t) + '°C 酷热：钓桥底阴凉深水，本味+果酸，早晚窗口期');
-    if(w.press && w.press < 1000) tips.push('💨 低压' + Math.round(w.press) + 'hPa 闷热：鱼易上浮，饵料清淡+果酸开胃，建议钓半水');
-    if(w.hum && w.hum > 85) tips.push('💧 湿度 ' + Math.round(w.hum) + '%：饵料开干散些防返水，少开多开');
-    if(w.wind && w.wind >= 20) tips.push('🌬️ 风 ' + Math.round(w.wind) + 'km/h：搓硬饵减雾化加粘粉，加重铅快速到底');
-    if(w.precipProb && w.precipProb > 60) tips.push('🌧️ 降水概率 ' + w.precipProb + '%：雨前腥味诱鱼积极，雨后转本味；雷雨禁钓');
-    return tips.join('；');
+    if(t < 5) tips.push('❄️ 严寒（' + Math.round(t) + '°C）：主攻红虫/蚯蚓活饵，浓腥拉饵，小钩细线（主线1.0/子线0.6），钓深水桥洞');
+    else if(t < 10) tips.push('❄️ 低温（' + Math.round(t) + '°C）：浓腥+虾粉，红虫首选；添加剂用千里香少量（防死窝）；打窝勤补少量');
+    else if(t < 15) tips.push('🌡️ 偏凉（' + Math.round(t) + '°C）：腥香 7:3，加 10-20% 虾粉，蚯蚓/红虫备选，钓向阳深水');
+    else if(t <= 28) tips.push('🌤️ 温度适宜（' + Math.round(t) + '°C）：腥香均衡，老三样 40:40:20 正合适，可搓可拉，全天可钓');
+    else if(t <= 33) tips.push('☀️ 偏热（' + Math.round(t) + '°C）：本味/谷物为主（蓝鲫20%+918 60%+速攻20%），果酸 1-3%，避腥避杂鱼');
+    else tips.push('🔥 酷热（' + Math.round(t) + '°C）：钓桥底阴凉/深水，清淡本味+果酸，早晚窗口期，正午收竿');
+    if(w.hum != null){
+      if(w.hum > 85) tips.push('💧 湿度 ' + Math.round(w.hum) + '%：饵料开干散防返水，少开勤开，添加剂减量');
+      else if(w.hum < 45) tips.push('💨 干燥 ' + Math.round(w.hum) + '%：饵料可略软，注意窝点补水');
+    }
+    if(w.press != null){
+      if(w.press < 1000) tips.push('💨 低压 ' + Math.round(w.press) + 'hPa 闷热：鱼易上浮，果酸开胃+清淡饵，定层半水或搜层钓');
+      else if(w.press <= 1022) tips.push('📈 气压适宜：鱼口活跃，可大胆打窝守钓');
+      else tips.push('📈 高压 ' + Math.round(w.press) + 'hPa：鱼活跃度高，正常作钓，钓深水更稳');
+    }
+    if(w.wind != null){
+      if(w.wind < 8) tips.push('🍃 静风：轻铅 3-5g，可悬铅钓底，信号最灵敏');
+      else if(w.wind < 20) tips.push('🌬️ 轻风：5-7g 铅，选背风桥墩，抓有力上下口');
+      else if(w.wind < 29) tips.push('🌪️ 和风：0.6mm+ 粗竿稍，铅 10g 左右绷紧风线，搓硬饵减雾化');
+      else tips.push('🌀 大风：不建议出钓；若坚持用粗稍重铅+背风位+大跑铅守底');
+    }
+    if(w.precipProb != null){
+      if(w.precipProb <= 10) tips.push('☀️ 降水概率低：可正常打窝作钓，全天安排');
+      else if(w.precipProb <= 40) tips.push('⛅ 少量降水：备好雨具，雨停后口好');
+      else if(w.precipProb <= 70) tips.push('🌧️ 降水概率 ' + w.precipProb + '%：雨前腥味诱鱼积极，鱼口快；雷雨前后禁钓');
+      else tips.push('⛈️ 高降水：雷雨禁止上桥作钓，雨停后 1-2 小时口最佳');
+    }
+    return tips;
   }
   function isRemoved(id, name){ return (removed[id] || []).indexOf(name) >= 0; }
   function cleanList(arr, id){ return (arr || []).filter(n => !isRemoved(id, n)); }
@@ -2011,7 +2050,6 @@ const BaitMatch = (() => {
   function matchItem(b, name){
     let water = b.waterRatio ? '<span class="b-water">水比 ' + Utils.esc(b.waterRatio) + '</span>' : '';
     return '<div class="match-item"><b>' + Utils.esc(b.brand) + '</b> · ' + Utils.esc(b.name) + water +
-      '<button class="b-add" title="收藏到我的饵料库" data-add-bait="' + Utils.esc(b.name) + '">＋</button>' +
       '<button class="b-del" title="从方案中移除" data-del-bait="' + Utils.esc(name) + '">✕</button></div>';
   }
   function render(){
@@ -2020,19 +2058,30 @@ const BaitMatch = (() => {
     const box = Utils.$('matchResult');
     if(!box) return;
     const season = seasonOf(month);
-    const main = cleanList(f.baits.main, fishId).map(n => matchItem(findBait(n), n)).join('');
-    const state = cleanList(f.baits.state, fishId).map(n => matchItem(findBait(n), n)).join('');
-    const add = cleanList(f.baits.add, fishId).map(n => matchItem(findBait(n), n)).join('');
-    const nest = cleanList(f.baits.nest, fishId).map(n => matchItem(findBait(n), n)).join('');
+    const main = comboList(f.baits.main, fishId, 'main').map(n => matchItem(findBait(n), n)).join('');
+    const state = comboList(f.baits.state, fishId, 'state').map(n => matchItem(findBait(n), n)).join('');
+    const add = comboList(f.baits.add, fishId, 'add').map(n => matchItem(findBait(n), n)).join('');
+    const nest = comboList(f.baits.nest, fishId, 'nest').map(n => matchItem(findBait(n), n)).join('');
+    const mainObjs = comboList(f.baits.main, fishId, 'main').map(findBait);
+    const stateObjs = comboList(f.baits.state, fishId, 'state').map(findBait);
+    const addObjs = comboList(f.baits.add, fishId, 'add').map(findBait);
+    const nestObjs = comboList(f.baits.nest, fishId, 'nest').map(findBait);
     const removedCnt = (removed[fishId] || []).length;
+    const addedCnt = (additions[fishId] || []).length;
     const envNote = env === 'black'
       ? '黑坑模式：鱼密度高、开口快，建议散炮/黄面面抢鱼，线组可略放粗 0.5 号，饵料味型加重。'
       : '野钓模式：窝量适中，避免重窝惊鱼；守大物时窝料加倍。';
     const wd = (typeof Weather !== 'undefined' && Weather.getLastData) ? Weather.getLastData() : null;
-    const wdHtml = '<div class="weather-bait-advice"><b>🌦️ 今日天气配饵建议：</b><span>' + weatherAdvice(wd) + '</span></div>';
-    box.innerHTML = wdHtml +
+    const wdHtml = '<div class="weather-bait-advice"><b>🌦️ 今日天气配饵建议：</b><ul>' + weatherAdvice(wd).map(function(t){ return '<li>' + Utils.esc(t) + '</li>'; }).join('') + '</ul></div>';
+    const addbarHtml =
+      '<div class="bait-addbar"><span>＋ 添加饵料到方案：</span>' +
+      '<input id="addBaitInput" placeholder="输入饵料名称（如：野战蓝鲫）" autocomplete="off">' +
+      '<select id="addBaitCat"><option value="main">主攻饵</option><option value="state">状态饵</option><option value="add">添加剂</option><option value="nest">窝料</option></select>' +
+      '<button id="addBaitBtn">添加</button></div>';
+    const comboHtml = '<div class="combo-advice"><b>💡 你的搭配建议：</b><ul>' + comboAdvice(mainObjs, stateObjs, addObjs, nestObjs, wd, season).map(function(t){ return '<li>' + Utils.esc(t) + '</li>'; }).join('') + '</ul></div>';
+    box.innerHTML = wdHtml + addbarHtml +
       '<div style="margin-bottom:6px;display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap;">' +
-        (removedCnt ? '<span style="font-size:.76rem;color:var(--muted);align-self:center;">已移除 ' + removedCnt + ' 款，可重置恢复</span>' : '') +
+        ((removedCnt || addedCnt) ? '<span style="font-size:.76rem;color:var(--muted);align-self:center;">已移除 ' + removedCnt + ' 款 / 已添加 ' + addedCnt + ' 款，可重置恢复</span>' : '') +
         '<button class="rel-link amber" id="matchReset" style="border:none;cursor:pointer;">↺ 重置方案</button>' +
       '</div>' +
       '<div class="match-block"><h4><span class="num-dot">1</span>主攻饵（核心）<span style="font-size:.76rem;color:var(--muted);font-weight:400;">＋ 收藏 · ✕ 移除</span></h4><div class="match-items">' + (main || '<span style="color:var(--muted)">暂无（可用活饵替代）</span>') + '</div></div>' +
@@ -2043,16 +2092,29 @@ const BaitMatch = (() => {
       '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">' +
         '<a href="#s0" class="rel-link" id="matchToCalc">⚖️ 用 ' + f.name + ' 计算钓组 →</a>' +
         '<a href="#s-tech" class="rel-link amber" id="matchToTech">📖 查看 ' + f.name + ' 手册 →</a>' +
-      '</div></div>';
+      '</div></div>' + comboHtml;
     const rs = Utils.$('matchReset');
-    if(rs) rs.addEventListener('click', function(){ removed[fishId] = []; render(); Toast.show('方案已重置', 'info'); });
+    if(rs) rs.addEventListener('click', function(){ removed[fishId] = []; additions[fishId] = []; render(); Toast.show('方案已重置', 'info'); });
+    const ab = Utils.$('addBaitBtn');
+    if(ab) ab.addEventListener('click', function(){
+      const inp = Utils.$('addBaitInput');
+      const nm = inp.value.trim();
+      if(!nm){ Toast.show('请输入饵料名称', 'warn'); return; }
+      const b = findBait(nm);
+      const cat = Utils.$('addBaitCat').value;
+      if(!additions[fishId]) additions[fishId] = [];
+      if(additions[fishId].some(function(a){ return a.name === b.name && a.cat === cat; })){ Toast.show('该饵料已在方案中', 'warn'); return; }
+      additions[fishId].push({ name: b.name, cat: cat });
+      inp.value = '';
+      render();
+      Toast.show('已添加：' + b.name + '（' + cat + '）', 'info');
+    });
+    const abi = Utils.$('addBaitInput');
+    if(abi) abi.addEventListener('keydown', function(e){ if(e.key === 'Enter') Utils.$('addBaitBtn').click(); });
     const c = Utils.$('matchToCalc');
     if(c) c.addEventListener('click', function(){ Utils.$('calcFish').value = fishId; Calc.run(); });
     const g = Utils.$('matchToTech');
     if(g) g.addEventListener('click', function(){ jumpToFish(fishId); });
-    box.querySelectorAll('[data-add-bait]').forEach(el => {
-      el.addEventListener('click', function(){ MyBaits.addFromName(el.dataset.addBait); });
-    });
     box.querySelectorAll('[data-del-bait]').forEach(el => {
       el.addEventListener('click', function(){
         const nm = el.dataset.delBait;
@@ -2072,84 +2134,6 @@ const BaitMatch = (() => {
   }
   function setFish(id){ fishId = id; const sel = Utils.$('matchFish'); if(sel) sel.value = id; }
   return { bind, render, setFish, getFishId: function(){ return fishId; }, seasonOf: seasonOf };
-})();
-
-/* ===== MyBaits（我的饵料库，localStorage） ===== */
-const MyBaits = (() => {
-  const KEY = 'qiaofa_my_baits_v2';
-  let list = Store.get(KEY, []);
-  function save(){ Store.set(KEY, list); }
-  function myBaitAdvice(b){
-    const parts = [];
-    const f = (b.flavor || '').toLowerCase();
-    if(/腥/.test(f)) parts.push('腥味饵：低温/早晚效果好，但易招杂鱼，夏季慎用');
-    if(/香/.test(f) && !/腥/.test(f)) parts.push('香型饵：高温季避杂鱼，广谱稳口');
-    if(/奶/.test(f)) parts.push('奶香：适合钓鲫鱼/生口鱼，黑坑好用');
-    if(/果酸/.test(f)) parts.push('果酸：闷热低压天添加，少量即可（1-3%）');
-    if(/薯/.test(f)) parts.push('薯味：主攻鲤鱼，守钓大物');
-    if(/玉米|发酵|酵|酒/.test(f)) parts.push('玉米/发酵：守大物，草鲤青通用');
-    if(/红虫|虾|虫/.test(f)) parts.push('高蛋白腥饵：低温活性强，配合虾粉增味');
-    if(/本味|谷物|麦|麸/.test(f)) parts.push('本味/谷物：可作基础饵打底，四季通用');
-    if(!parts.length) parts.push('通用型：按目标鱼搭配主攻饵使用');
-    const ratio = (b.ratio || '').replace(/\s+/g, '');
-    if(!ratio) parts.push('建议补充水比，参考同类饵 1:0.9');
-    else if(/1:0\.[1-6]/.test(ratio)) parts.push('水比偏干：适合散炮/搓硬饵或蘸麻团');
-    else if(/1:0\.[7-9]/.test(ratio)) parts.push('水比适中：可搓可拉，通用');
-    else if(/1:1(\.|$)/.test(ratio)) parts.push('水比 1:1：适合拉饵，拉丝粉出丝充分');
-    if(b.fish) parts.push('目标鱼「' + b.fish + '」：配饵时可查对应鱼种的作战手册');
-    return parts.join('；');
-  }
-  function render(){
-    const box = Utils.$('mybList');
-    if(!box) return;
-    if(!list.length){
-      box.innerHTML = '<div class="mb-empty">还没有自定义饵料，添加后会显示在这里</div>';
-      return;
-    }
-    box.innerHTML = list.map(function(b, i){
-      return '<div class="mybait"><b>' + Utils.esc(b.name) + '</b>' +
-        (b.brand ? '<span>' + Utils.esc(b.brand) + '</span>' : '') +
-        (b.flavor ? '<span style="color:var(--muted)">' + Utils.esc(b.flavor) + '</span>' : '') +
-        (b.ratio ? '<span style="color:var(--brand2)">水比 ' + Utils.esc(b.ratio) + '</span>' : '') +
-        (b.fish ? '<span class="tag">' + Utils.esc(b.fish) + '</span>' : '') +
-        '<button class="mb-del" data-del="' + i + '">删除</button>' +
-        '<div class="mb-advice">💡 ' + myBaitAdvice(b) + '</div></div>';
-    }).join('');
-    box.querySelectorAll('[data-del]').forEach(el => {
-      el.addEventListener('click', function(){
-        list.splice(parseInt(el.dataset.del, 10), 1);
-        save(); render();
-        Toast.show('已删除', 'info');
-      });
-    });
-  }
-  function addFromName(name){
-    if(!name) return;
-    const b = (DATA.baits || []).find(function(x){ return x.name === name; }) || {};
-    list.push({ name: name, brand: b.brand || '通用', flavor: b.flavor || '', ratio: b.waterRatio || '', fish: '' });
-    save(); render();
-    Toast.show('已加入我的饵料库：' + name, 'info');
-  }
-  function bind(){
-    Utils.$('mybAdd').addEventListener('click', function(){
-      const name = Utils.$('mybName').value.trim();
-      if(!name){ Toast.show('请填写饵料名称', 'warn'); return; }
-      list.push({
-        name: name,
-        brand: Utils.$('mybBrand').value.trim(),
-        flavor: Utils.$('mybFlavor').value.trim(),
-        ratio: Utils.$('mybRatio').value.trim(),
-        fish: Utils.$('mybFish').value
-      });
-      save(); render();
-      Utils.$('mybName').value = ''; Utils.$('mybBrand').value = ''; Utils.$('mybFlavor').value = ''; Utils.$('mybRatio').value = '';
-      Toast.show('已添加自定义饵料', 'info');
-    });
-    ['mybName','mybBrand','mybFlavor','mybRatio'].forEach(function(id){
-      Utils.$(id).addEventListener('keydown', function(e){ if(e.key === 'Enter') Utils.$('mybAdd').click(); });
-    });
-  }
-  return { bind: bind, render: render, addFromName: addFromName, list: list };
 })();
 
 /* ============================================================
@@ -2207,12 +2191,9 @@ const BaitView = (() => {
           (b.waterRatio ? '<div class="bi-water">💧 水比 / 用法：' + Utils.esc(b.waterRatio) + '</div>' : '') +
           '<div class="bi-tags">' + targets + seasons + '</div>' +
           '<div class="bi-note">' + Utils.esc(b.flavor) + ' · ' + Utils.esc(b.note) + '</div>' +
-          '<div style="margin-top:6px;"><button class="rel-link" data-add-b2="' + Utils.esc(b.name) + '" style="border:none;background:#eef7f1;color:#0d5f52;font-weight:600;cursor:pointer;">＋ 收藏到我的饵料</button></div></div>';
+          '</div>';
       }).join('');
     }
-    box.querySelectorAll('[data-add-b2]').forEach(el => {
-      el.addEventListener('click', function(){ MyBaits.addFromName(el.dataset.addB2); });
-    });
     const pager = Utils.$('baitPager');
     if(pager){
       pager.innerHTML = '<button id="baitPrev" ' + (page <= 1 ? 'disabled' : '') + '>‹ 上一页</button><span>' + page + ' / ' + pages + ' 页</span><button id="baitNext" ' + (page >= pages ? 'disabled' : '') + '>下一页 ›</button>';
@@ -2815,8 +2796,6 @@ const Collapse = (() => {
   /* 模块绑定 */
   BaitView.bind();
   BaitMatch.bind();
-  MyBaits.bind();
-  MyBaits.render();
   Calc.bind();
   Tech.render(null);
   Search.bind();
