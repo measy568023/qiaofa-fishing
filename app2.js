@@ -4,7 +4,7 @@
  * 模块：BaitMatch / BaitView / Calc / Tech / Search / UI / UpdateCheck / boot
  * ============================================================ */
 
-const APP_VERSION = '2.2.5';
+const APP_VERSION = '2.3.0';
 
 /* ============================================================
  * BaitMatch（配饵中心：经典配方 + 收藏到我的饵料）
@@ -20,6 +20,30 @@ const BaitMatch = (() => {
   function saveState(){ Store.set(MATCH_KEY, { removed: removed, additions: additions }); }
   function comboList(arr, id, cat){
     return cleanList(arr, id).concat((additions[id] || []).filter(a => a.cat === cat && !isRemoved(id, a.name)).map(a => a.name));
+  }
+  function addOne(nm, cat){
+    const b = findBait(nm);
+    const c = cat || Utils.$('addBaitCat').value;
+    if(!additions[fishId]) additions[fishId] = [];
+    if(additions[fishId].some(function(a){ return a.name === b.name && a.cat === c; })){ Toast.show('该饵料已在方案中', 'warn'); return false; }
+    additions[fishId].push({ name: b.name, cat: c });
+    saveState();
+    render();
+    Toast.show('已添加：' + b.name + '（' + c + '）', 'info');
+    return true;
+  }
+  function renderPick(kw){
+    const box = Utils.$('pickList');
+    if(!box) return;
+    const k = (kw || '').toLowerCase();
+    const items = (DATA.baits || []).filter(function(b){ return !k || (b.brand + b.name + b.flavor + (b.cat || '') + (b.note || '')).toLowerCase().indexOf(k) >= 0; }).slice(0, 15);
+    if(!items.length){ box.innerHTML = '<div class="mb-empty">无匹配饵料，可尝试其他关键词</div>'; return; }
+    box.innerHTML = items.map(function(b){
+      return '<div class="pick-item" data-pick="' + Utils.esc(b.name) + '"><b>' + Utils.esc(b.name) + '</b><span class="p-meta">' + Utils.esc(b.brand) + ' · ' + Utils.esc(b.cat) + ' · ' + Utils.esc(b.flavor) + '</span></div>';
+    }).join('');
+    box.querySelectorAll('[data-pick]').forEach(function(el){
+      el.addEventListener('click', function(){ addOne(el.dataset.pick); });
+    });
   }
   function comboAdvice(mainObjs, stateObjs, addObjs, nestObjs, wd, season){
     const lines = [];
@@ -171,14 +195,17 @@ const BaitMatch = (() => {
     const wdHtml = '<div class="weather-bait-advice"><b>🌦️ 今日天气配饵建议：</b><ul>' + weatherAdvice(wd).map(function(t){ return '<li>' + Utils.esc(t) + '</li>'; }).join('') + '</ul></div>';
     const addbarHtml =
       '<div class="bait-addbar"><span>＋ 添加饵料到方案：</span>' +
-      '<input id="addBaitInput" placeholder="输入饵料名称（如：野战蓝鲫）" autocomplete="off">' +
+      '<input id="addBaitInput" placeholder="输入饵料名称" autocomplete="off">' +
       '<select id="addBaitCat"><option value="main">主攻饵</option><option value="state">状态饵</option><option value="add">添加剂</option><option value="nest">窝料</option></select>' +
-      '<button id="addBaitBtn">添加</button></div>';
+      '<button id="addBaitBtn">添加</button>' +
+      '<button id="pickBaitBtn" style="background:#fff;color:#0369a1;border:1px solid #bae6fd;">📚 挑选</button></div>' +
+      '<div class="pick-panel" id="pickPanel" hidden><input id="pickKw" placeholder="搜索饵料名称 / 品牌 / 味型…" autocomplete="off"><div id="pickList"></div></div>';
     const comboHtml = '<div class="combo-advice"><b>💡 天气适配分析（这套饵今天适用吗）：</b><ul>' + comboAdvice(mainObjs, stateObjs, addObjs, nestObjs, wd, season).map(function(t){ return '<li>' + Utils.esc(t) + '</li>'; }).join('') + '</ul></div>';
-    box.innerHTML = wdHtml + addbarHtml +
+    box.innerHTML = wdHtml + comboHtml + addbarHtml +
       '<div style="margin-bottom:6px;display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap;">' +
         ((removedCnt || addedCnt) ? '<span style="font-size:.76rem;color:var(--muted);align-self:center;">已移除 ' + removedCnt + ' 款 / 已添加 ' + addedCnt + ' 款，可重置恢复</span>' : '') +
         '<button class="rel-link amber" id="matchReset" style="border:none;cursor:pointer;">↺ 重置方案</button>' +
+        '<button class="rel-link" id="matchCopy" style="border:none;cursor:pointer;">📋 复制方案</button>' +
       '</div>' +
       '<div class="match-block"><h4><span class="num-dot">1</span>主攻饵（核心）<span style="font-size:.76rem;color:var(--muted);font-weight:400;">＋ 收藏 · ✕ 移除</span></h4><div class="match-items">' + (main || '<span style="color:var(--muted)">暂无（可用活饵替代）</span>') + '</div></div>' +
       (state ? '<div class="match-block"><h4><span class="num-dot">2</span>状态饵（调状态）</h4><div class="match-items">' + state + '</div></div>' : '') +
@@ -196,18 +223,33 @@ const BaitMatch = (() => {
       const inp = Utils.$('addBaitInput');
       const nm = inp.value.trim();
       if(!nm){ Toast.show('请输入饵料名称', 'warn'); return; }
-      const b = findBait(nm);
-      const cat = Utils.$('addBaitCat').value;
-      if(!additions[fishId]) additions[fishId] = [];
-      if(additions[fishId].some(function(a){ return a.name === b.name && a.cat === cat; })){ Toast.show('该饵料已在方案中', 'warn'); return; }
-      additions[fishId].push({ name: b.name, cat: cat });
       inp.value = '';
-      saveState();
-      render();
-      Toast.show('已添加：' + b.name + '（' + cat + '）', 'info');
+      addOne(nm);
     });
     const abi = Utils.$('addBaitInput');
     if(abi) abi.addEventListener('keydown', function(e){ if(e.key === 'Enter') Utils.$('addBaitBtn').click(); });
+    const pb = Utils.$('pickBaitBtn');
+    if(pb) pb.addEventListener('click', function(){
+      const pp = Utils.$('pickPanel');
+      if(!pp) return;
+      pp.hidden = !pp.hidden;
+      if(!pp.hidden){ renderPick(''); Utils.$('pickKw').value = ''; }
+    });
+    const pk = Utils.$('pickKw');
+    if(pk) pk.addEventListener('input', function(){ renderPick(pk.value.trim()); });
+    const mc2 = Utils.$('matchCopy');
+    if(mc2) mc2.addEventListener('click', function(){
+      const L = [];
+      L.push('【' + f.name + ' 配饵方案】' + month + '月 · ' + season + '季');
+      const wdTxt = weatherAdvice(wd).join('\n');
+      if(wdTxt) L.push('【今日天气建议】\n' + wdTxt);
+      if(mainObjs.length) L.push('【主攻饵】\n' + mainObjs.map(function(b){ return '· ' + b.brand + ' ' + b.name + (b.waterRatio ? '（水比 ' + b.waterRatio + '）' : ''); }).join('\n'));
+      if(stateObjs.length) L.push('【状态饵】\n' + stateObjs.map(function(b){ return '· ' + b.name + (b.waterRatio ? '（' + b.waterRatio + '）' : ''); }).join('\n'));
+      if(addObjs.length) L.push('【添加剂】\n' + addObjs.map(function(b){ return '· ' + b.name; }).join('\n'));
+      if(nestObjs.length) L.push('【窝料】\n' + nestObjs.map(function(b){ return '· ' + b.name; }).join('\n'));
+      L.push('【作钓要点】\n' + f.tips[season]);
+      copyText(L.join('\n\n'));
+    });
     const c = Utils.$('matchToCalc');
     if(c) c.addEventListener('click', function(){ Utils.$('calcFish').value = fishId; Calc.run(); });
     const g = Utils.$('matchToTech');
@@ -501,6 +543,89 @@ const Calc = (() => {
     });
   }
   return { bind: bind, run: run };
+})();
+
+/* ===== 全局工具：复制文本 / 今日速览 / 钓况记录本 ===== */
+function copyText(txt){
+  if(!txt) return;
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(function(){ Toast.show('已复制', 'info'); }).catch(function(){ Toast.show('复制失败，请手动复制', 'warn'); });
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); Toast.show('已复制', 'info'); }catch(e){ Toast.show('复制失败，请手动复制', 'warn'); }
+    ta.remove();
+  }
+}
+function renderToday(){
+  const body = Utils.$('todayBody');
+  if(!body) return;
+  const f = FishContext.getFish();
+  if(!f){ body.innerHTML = '<span style="color:#d8f2f7;">请先选择目标鱼</span>'; return; }
+  const season = (DATA.monthSeason || {})[new Date().getMonth() + 1] || '夏';
+  const wd = (typeof Weather !== 'undefined' && Weather.getLastData) ? Weather.getLastData() : null;
+  const h = [];
+  h.push('<div class="td-item"><b>🎯 目标鱼</b>：' + f.name + ' · 最适水温 ' + f.tempPref.min + '~' + f.tempPref.max + '°C</div>');
+  h.push('<div class="td-item"><b>🎣 推荐钓组</b>：' + Utils.esc(f.rig.main) + ' / ' + Utils.esc(f.rig.sub) + ' · ' + Utils.esc(f.rig.hook) + '</div>');
+  h.push('<div class="td-item"><b>📋 经典配方</b>：' + Utils.esc(f.formula) + '</div>');
+  h.push('<div class="td-item"><b>🗓️ 本月要点（' + season + '季）</b>：' + Utils.esc(f.tips[season] || '') + '</div>');
+  if(wd && typeof wd.temp === 'number'){
+    if(wd.temp < 10) h.push('<div class="td-item"><b>🌡️ 今日用饵</b>：低温，浓腥/红虫为主，加虾粉千里香</div>');
+    else if(wd.temp <= 28) h.push('<div class="td-item"><b>🌡️ 今日用饵</b>：温度适宜，按经典配方开饵即可</div>');
+    else h.push('<div class="td-item"><b>🌡️ 今日用饵</b>：偏热，本味/谷物+少量果酸，避杂鱼</div>');
+    if(wd.moon) h.push('<div class="td-item"><b>🌙 月相</b>：' + wd.moon + (wd.sunrise ? ' · 日出 ' + wd.sunrise + ' / 日落 ' + wd.sunset : '') + '</div>');
+  }
+  h.push('<div class="td-actions"><a href="#s0" class="rel-link">🧮 详细计算</a><a href="#s-bait" class="rel-link">🎣 配饵中心</a><a href="#s-tech" class="rel-link">📖 作战手册</a></div>');
+  body.innerHTML = h.join('');
+}
+const LogBook = (() => {
+  const KEY = 'qiaofa_log_v1';
+  let list = Store.get(KEY, []);
+  function save(){ Store.set(KEY, list); }
+  function todayStr(){ const d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  function render(){
+    const box = Utils.$('logList');
+    if(!box) return;
+    if(!list.length){ box.innerHTML = '<div class="mb-empty">还没有记录，钓完记一笔，越攒越准</div>'; return; }
+    box.innerHTML = list.slice().reverse().map(function(r, i){
+      const idx = list.length - 1 - i;
+      return '<div class="mybait"><b>' + Utils.esc(r.date || '') + ' · ' + Utils.esc(r.spot || '—') + '</b>' +
+        '<span>' + Utils.esc(r.time || '') + '</span>' +
+        (r.fish ? '<span class="tag">' + Utils.esc(r.fish) + '</span>' : '') +
+        (r.count != null ? '<span style="color:var(--brand2);font-weight:700;">' + r.count + ' 条</span>' : '') +
+        (r.weather ? '<span style="color:var(--muted)">☁️ ' + Utils.esc(r.weather) + '</span>' : '') +
+        (r.bait ? '<span style="color:var(--muted)">🎣 ' + Utils.esc(r.bait) + '</span>' : '') +
+        (r.note ? '<span style="color:var(--muted)">📝 ' + Utils.esc(r.note) + '</span>' : '') +
+        '<button class="mb-del" data-del="' + idx + '">删除</button></div>';
+    }).join('');
+    box.querySelectorAll('[data-del]').forEach(function(el){
+      el.addEventListener('click', function(){ list.splice(parseInt(el.dataset.del, 10), 1); save(); render(); Toast.show('已删除', 'info'); });
+    });
+  }
+  function bind(){
+    const ld = Utils.$('logDate'); if(ld) ld.value = todayStr();
+    const lf = Utils.$('logFish');
+    if(lf) lf.innerHTML = FISH_ORDER.map(function(id){ const f = DATA.fishProfiles[id]; return '<option value="' + f.id + '">' + f.name + '</option>'; }).join('');
+    const la = Utils.$('logAdd');
+    if(la) la.addEventListener('click', function(){
+      list.push({
+        date: (Utils.$('logDate') ? Utils.$('logDate').value : '') || todayStr(),
+        spot: Utils.$('logSpot') ? Utils.$('logSpot').value.trim() : '',
+        time: Utils.$('logTime') ? Utils.$('logTime').value : '',
+        fish: lf ? (DATA.fishProfiles[lf.value] ? DATA.fishProfiles[lf.value].name : '') : '',
+        weather: Utils.$('logWeather') ? Utils.$('logWeather').value.trim() : '',
+        bait: Utils.$('logBait') ? Utils.$('logBait').value.trim() : '',
+        count: Utils.$('logCount') ? parseInt(Utils.$('logCount').value, 10) || 0 : 0,
+        note: Utils.$('logNote') ? Utils.$('logNote').value.trim() : ''
+      });
+      save(); render();
+      ['logSpot','logWeather','logBait','logNote'].forEach(function(id){ if(Utils.$(id)) Utils.$(id).value = ''; });
+      Toast.show('已记录本次出钓', 'info');
+    });
+    render();
+  }
+  return { bind: bind, render: render };
 })();
 
 /* ============================================================
@@ -928,6 +1053,9 @@ const Collapse = (() => {
   Collapse.init();
   Weather.bind();
   Weather.init();
+  LogBook.bind();
+  renderToday();
+  FishContext.onChange(renderToday);
   /* PWA：注册 Service Worker */
   if('serviceWorker' in navigator && location.protocol !== 'file:' && window.isSecureContext){
     window.addEventListener('load', function(){
