@@ -4,7 +4,7 @@
  * 模块：BaitMatch / BaitView / Calc / Tech / Search / UI / UpdateCheck / boot
  * ============================================================ */
 
-const APP_VERSION = '2.3.3';
+const APP_VERSION = '2.3.4';
 
 /* ============================================================
  * BaitMatch（配饵中心：经典配方 + 收藏到我的饵料）
@@ -1043,6 +1043,9 @@ const Collapse = (() => {
   const ms = Utils.$('monthMsg');
   if(ms) ms.textContent = '当前：' + nowMonth + '月 · ' + ((DATA.monthSeason || {})[nowMonth] || '') + '季';
   /* 模块绑定 */
+  /* 天气优先加载（避免被其他模块初始化阻塞） */
+  Weather.bind();
+  Weather.init();
   BaitView.bind();
   BaitMatch.bind();
   Calc.bind();
@@ -1050,8 +1053,6 @@ const Collapse = (() => {
   Search.bind();
   UI.bind();
   Collapse.init();
-  Weather.bind();
-  Weather.init();
   LogBook.bind();
   renderToday();
   FishContext.onChange(renderToday);
