@@ -380,6 +380,28 @@ tailwind.config = {
   .match-item .b-del{background:none;border:none;color:var(--danger);font-size:.9rem;cursor:pointer;margin-left:4px;padding:0 3px;}
   .match-item .b-del:hover{color:#dc2626;font-weight:800;}
   /* 天气配饵建议 + 搭配建议 + 添加饵料条 */
+  .wb-factors{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:.78rem;color:#cfeef6;margin:2px 0;}
+  .wb-factors span{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:2px 10px;}
+  /* 今日出钓速览 */
+  .today-wrap{max-width:960px;margin:16px auto 0;}
+  .today-card{background:rgba(255,255,255,.13);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.25);border-radius:16px;padding:14px 16px;text-align:left;color:#fff;}
+  .today-head{font-size:1rem;font-weight:800;margin-bottom:8px;}
+  .today-body{font-size:.86rem;line-height:1.8;}
+  .td-item{margin-bottom:5px;}
+  .td-item b{color:#fff;}
+  .td-actions{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;}
+  .today-body .rel-link{background:#fff;color:#0369a1;border-color:transparent;}
+  html.dark .today-body .rel-link{background:#0f172a;color:#7dd3fc;}
+  /* 饵料挑选面板 */
+  .pick-panel{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:12px;max-height:280px;overflow-y:auto;}
+  html.dark .pick-panel{background:#0f172a;border-color:#334155;}
+  .pick-panel input{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 10px;font-size:15px;outline:none;margin-bottom:8px;min-height:44px;}
+  .pick-item{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:.84rem;}
+  .pick-item:hover{background:#f0f9ff;}
+  .pick-item b{color:#0b4250;}
+  .pick-item .p-meta{font-size:.72rem;color:var(--muted);}
+  html.dark .pick-item b{color:#e2e8f0;}
+  html.dark .pick-item:hover{background:#0f3052;}
   .weather-bait-advice{background:#e0f2fe;border:1px solid #bae6fd;border-left:4px solid #0ea5e9;border-radius:10px;padding:10px 14px;font-size:.86rem;color:#075985;margin-bottom:12px;line-height:1.8;}
   html.dark .weather-bait-advice{background:#0c2a3e;border-color:#0369a1;color:#7dd3fc;}
   .weather-bait-advice b{font-weight:700;}
@@ -452,7 +474,14 @@ tailwind.config = {
         <div class="wb-tips" id="fishTips"></div>
       </div>
       <div class="wb-meta" id="wbMeta"></div>
+      <div class="wb-factors" id="wbFactors"></div>
       <div class="offline-tip" id="offlineTip" hidden>⚠️ 当前为离线参考数据，联网后可获取实时天气</div>
+    </div>
+  </div>
+  <div class="today-wrap" id="todayWrap">
+    <div class="today-card">
+      <div class="today-head">🎯 今日出钓速览</div>
+      <div class="today-body" id="todayBody"><span style="color:#d8f2f7;">加载中…</span></div>
     </div>
   </div>
 </header>
@@ -463,12 +492,7 @@ tailwind.config = {
     <a href="#s-bait">🎣 饵料库</a>
     <a href="#s-tech">📖 作战手册</a>
     <a href="#safety">⚠️ 安全提示</a>
-    <div class="nav-search">
-      <input id="pageSearch" placeholder="🔍 站内搜索…" autocomplete="off">
-      <div class="search-panel" id="searchPanel" hidden></div>
-    </div>
-    <button id="themeToggle" title="切换明暗模式" aria-label="切换明暗模式">🌙</button>
-    <button id="navBurger" title="菜单" aria-label="菜单">☰</button>
+    <a href="#s-log">📒 钓况</a>
   </div>
   <div id="mobileMenu">
     <a href="#weather">🌤️ 天气指数</a>
@@ -476,6 +500,7 @@ tailwind.config = {
     <a href="#s-bait">🎣 饵料库</a>
     <a href="#s-tech">📖 作战手册</a>
     <a href="#safety">⚠️ 安全提示</a>
+    <a href="#s-log">📒 钓况</a>
     <a id="mCheckUpdate" href="#" style="color:#0369a1;font-weight:700;">🔄 检查更新</a>
   </div>
 </nav>
@@ -653,10 +678,30 @@ tailwind.config = {
       </ul>
     </div>
   </section>
+
+  <!-- 钓况记录本 -->
+  <section id="s-log" data-static="1">
+    <div class="sec-head"><div class="num">📒</div><h2>钓况记录本</h2><span class="static-badge">自用积累 · 本地保存</span></div>
+    <div class="card">
+      <div class="calc-form">
+        <div><label>日期</label><input type="date" id="logDate"></div>
+        <div><label>钓位 / 桥墩</label><input id="logSpot" placeholder="如：南门桥 3 号墩"></div>
+        <div><label>时段</label><select id="logTime"><option value="清晨">清晨</option><option value="上午-中午">上午-中午</option><option value="下午">下午</option><option value="夜钓">夜钓</option></select></div>
+        <div><label>目标鱼</label><select id="logFish"></select></div>
+        <div><label>天气情况</label><input id="logWeather" placeholder="如：阴 22°C 微风"></div>
+        <div><label>饵料 / 钓法</label><input id="logBait" placeholder="如：老三样 + 红虫"></div>
+        <div><label>渔获（条）</label><input type="number" id="logCount" min="0" value="0" inputmode="numeric"></div>
+        <div><label>备注</label><input id="logNote" placeholder="如：桥墩迎水面口好"></div>
+        <div class="mb-btn"><button id="logAdd">＋ 记录本次出钓</button></div>
+      </div>
+      <div class="mybaits-list" id="logList"><div class="mb-empty">还没有记录，钓完记一笔，越攒越准</div></div>
+    </div>
+  </section>
 </main>
 <footer>
   🎣 桥筏钓鱼全攻略 · 数据版本 <b id="footVer">--</b>
-  <button id="checkBtn" style="background:none;border:1px solid #7fb7c4;color:#c6e6ec;border-radius:999px;padding:6px 14px;cursor:pointer;font-size:.82rem;margin-left:8px;">🔄 检查更新</button><br>
+  <button id="checkBtn" style="background:none;border:1px solid #7fb7c4;color:#c6e6ec;border-radius:999px;padding:6px 14px;cursor:pointer;font-size:.82rem;margin-left:8px;">🔄 检查更新</button>
+  <button id="installBtn" hidden style="background:#0369a1;color:#fff;border:none;border-radius:999px;padding:8px 18px;cursor:pointer;font-size:.85rem;margin-left:8px;">📲 安装到手机 / 桌面</button><br>
   天气数据源：Open-Meteo（默认免费）· 可切换和风 / 高德（需免费 KEY）· 出钓指数与钓组建议仅供参考<br>
   雷雨大风请勿出钓 · 高压线下严禁作钓 · 上桥作钓注意人身与交通安全 · <span id="footEnv"></span>
   <div class="copyright">© 2026 桥筏钓鱼全攻略 · 仅供个人学习参考 · 以当地法规与现场安全为准</div>
@@ -691,10 +736,10 @@ tailwind.config = {
  * 单独维护此文件并上传覆盖，即可全站更新数据（页面自动检测新版本）。
  * 字段说明见各区块注释。本文件仅包含数据，不含业务逻辑。
  * ============================================================ */
-window.QIAOFA_DATA_VERSION = '2.2.5';
+window.QIAOFA_DATA_VERSION = '2.3.0';
 
 window.QIAOFA_DATA = {
-  version: '2.2.5',
+  version: '2.3.0',
   updatedAt: '2026-09-23',
 
   /* 月份 → 季节映射（计算器按月份联动季节） */
@@ -1520,7 +1565,7 @@ const Weather = (() => {
   const fallbackWeather = {
     current: { temperature_2m: 25, weather_code: 2, wind_speed_10m: 12, wind_direction_10m: 135,
       relative_humidity_2m: 75, apparent_temperature: 27, surface_pressure: 1013, uv_index: 5 },
-    daily: { weather_code: [2,3,61], temperature_2m_max: [28,29,26], temperature_2m_min: [20,21,19], precipitation_probability_max: [20,40,70] }
+    daily: { weather_code: [2,3,61], temperature_2m_max: [28,29,26], temperature_2m_min: [20,21,19], precipitation_probability_max: [20,40,70], sunrise: ['06:30','06:31','06:32'], sunset: ['18:30','18:29','18:28'] }
   };
   let cfg = Object.assign({ src: 'openmeteo', key: '' }, Store.get(CFG_KEY, {}));
   let currentCity = { name: '', lat: null, lon: null };
@@ -1554,7 +1599,39 @@ const Weather = (() => {
     const dirs=['北','东北','东','东南','南','西南','西','西北'];
     return dirs[Math.round((((deg%360)+360)%360)/45)%8];
   }
-  function calcIndex(t, windKmh, precipProb, press, hum){
+  /* 月相计算（基于日期的月龄近似） */
+  function moonPhase(d){
+    const syn = 29.53058867;
+    const ref = Date.UTC(2000, 0, 6, 18, 14, 0);
+    const age = ((d.getTime() - ref) / 86400000) % syn;
+    const a = (age + syn) % syn;
+    if(a < 1.8) return { name:'新月', score: -2, note:'夜黑' };
+    if(a < 6.4) return { name:'娥眉月', score: 0, note:'' };
+    if(a < 8.8) return { name:'上弦月', score: 1, note:'夜钓光线渐好' };
+    if(a < 13.3) return { name:'盈凸月', score: 2, note:'' };
+    if(a < 15.8) return { name:'满月', score: 3, note:'夜钓光线好，大物活跃' };
+    if(a < 19.3) return { name:'亏凸月', score: 2, note:'' };
+    if(a < 23.6) return { name:'下弦月', score: 1, note:'后半夜月明' };
+    if(a < 27.6) return { name:'残月', score: 0, note:'' };
+    return { name:'新月', score: -2, note:'夜黑' };
+  }
+  function toHour(v){
+    if(!v) return null;
+    let h = null;
+    try{ const d = new Date(v); if(!isNaN(d.getTime())) h = d.getHours() + d.getMinutes()/60; }catch(e){}
+    if(h == null && typeof v === 'string' && /^\d{1,2}:\d{2}/.test(v)){
+      const p = v.split(':');
+      h = parseFloat(p[0]) + parseFloat(p[1])/60;
+    }
+    return h;
+  }
+  function fmtHM(v){
+    if(!v) return '--';
+    if(typeof v === 'string' && /^\d{1,2}:\d{2}/.test(v)) return v;
+    try{ const d = new Date(v); if(!isNaN(d.getTime())) return ('0'+d.getHours()).slice(-2) + ':' + ('0'+d.getMinutes()).slice(-2); }catch(e){}
+    return '--';
+  }
+  function calcIndex(t, windKmh, precipProb, press, hum, extras){
     const pref = FishContext.getFish() ? FishContext.getFish().tempPref : null;
     let s = 60;
     if(pref && isFinite(pref.min) && isFinite(pref.max)){
@@ -1572,6 +1649,30 @@ const Weather = (() => {
     else if(precipProb <= 70) s -= 10; else s -= 20;
     if(press>=1002 && press<=1022) s += 10; else if(press<995 || press>1030) s -= 10;
     if(hum>=50 && hum<=80) s += 5; else if(hum>90) s -= 5;
+    /* 新增维度：昼夜温差 / 昨日骤变 / 日出日落窗口 / 月相 */
+    if(extras){
+      if(extras.tmax != null && extras.tmin != null){
+        const diff = extras.tmax - extras.tmin;
+        if(diff <= 6) s += 8;
+        else if(diff <= 9) s += 2;
+        else if(diff <= 12) s -= 6;
+        else s -= 12;
+      }
+      if(extras.yesterdayMax != null && extras.tmax != null){
+        const jump = Math.abs(extras.tmax - extras.yesterdayMax);
+        if(jump >= 8) s -= 10;
+        else if(jump >= 5) s -= 4;
+        else s += 2;
+      }
+      if(extras.sunriseH != null && extras.sunsetH != null){
+        const now = new Date();
+        const hr = now.getHours() + now.getMinutes()/60;
+        if(hr >= extras.sunriseH - 0.5 && hr <= extras.sunriseH + 1.5) s += 8;
+        else if(hr >= extras.sunsetH - 2 && hr <= extras.sunsetH + 0.5) s += 8;
+        else if(hr >= 11 && hr <= 15) s -= 6;
+      }
+      if(extras.moonScore != null) s += extras.moonScore;
+    }
     if(!isFinite(s)) s = 50;
     return Math.max(0, Math.min(100, s));
   }
@@ -1634,8 +1735,9 @@ const Weather = (() => {
     lvEl.style.color = '#fff';
     Utils.$('fishTips').innerHTML = '💡 作钓建议（目标鱼：' + (FishContext.getFish() ? FishContext.getFish().name : '综合') + '）：<ul>' + tips.map(t => '<li>' + Utils.esc(t) + '</li>').join('') + '</ul>';
   }
-  function renderWeather(data){
+  function renderWeather(data, opt){
     if(!data || !data.current || !data.daily) throw new Error('天气数据格式异常');
+    opt = opt || {};
     Utils.$('cityName').textContent = currentCity.name || '当前位置';
     Utils.$('curTemp').textContent = Math.round(data.current.temperature_2m);
     Utils.$('curDesc').textContent = codeIcon(data.current.weather_code)+' '+codeText(data.current.weather_code);
@@ -1654,18 +1756,43 @@ const Weather = (() => {
       const tmax = days.temperature_2m_max[i] != null ? Math.round(days.temperature_2m_max[i]) : '--';
       const tmin = days.temperature_2m_min[i] != null ? Math.round(days.temperature_2m_min[i]) : '--';
       const pprob = days.precipitation_probability_max[i] != null ? days.precipitation_probability_max[i] : '-';
+      const dw = days.wind_speed_10m_max != null && days.wind_speed_10m_max[i] != null ? windLevel(days.wind_speed_10m_max[i]) : null;
       html += '<div class="day"><div>'+label+'</div><div>'+codeIcon(wc)+'</div>'+
               '<div><b>'+tmax+'°</b> / '+tmin+'°</div>'+
-              '<div>💧'+pprob+'%</div></div>';
+              '<div>💧'+pprob+'%'+(dw != null ? ' · 💨'+dw+'级' : '')+'</div></div>';
     }
     Utils.$('daysRow').innerHTML = html;
+    const tmax0 = days.temperature_2m_max[0] != null ? days.temperature_2m_max[0] : null;
+    const tmin0 = days.temperature_2m_min[0] != null ? days.temperature_2m_min[0] : null;
+    const sr = days.sunrise ? days.sunrise[0] : null;
+    const ss = days.sunset ? days.sunset[0] : null;
+    const moon = moonPhase(new Date());
+    const sunriseH = toHour(sr), sunsetH = toHour(ss);
+    const extras = { tmax: tmax0, tmin: tmin0, yesterdayMax: opt.yesterdayMax || null, sunriseH: sunriseH, sunsetH: sunsetH, moonScore: moon.score };
+    const factors = [];
+    if(tmax0 != null && tmin0 != null){
+      const diff = Math.round(tmax0 - tmin0);
+      factors.push('🌡️ 昼夜温差 ' + diff + '°C' + (diff <= 6 ? '（稳定）' : diff <= 9 ? '（正常）' : diff <= 12 ? '（偏大）' : '（大·口易乱）'));
+    }
+    if(opt.yesterdayMax != null && tmax0 != null){
+      const jump = Math.round(Math.abs(tmax0 - opt.yesterdayMax));
+      factors.push('🔄 昨→今最高 ' + Math.round(opt.yesterdayMax) + '→' + Math.round(tmax0) + '°C' + (jump >= 8 ? '（骤变·减分）' : jump >= 5 ? '（波动）' : '（平稳）'));
+    }
+    if(sr || ss){
+      const now = new Date(); const hr = now.getHours() + now.getMinutes()/60;
+      const inWin = (sunriseH != null && hr >= sunriseH - 0.5 && hr <= sunriseH + 1.5) || (sunsetH != null && hr >= sunsetH - 2 && hr <= sunsetH + 0.5);
+      factors.push('🌅 日出 ' + fmtHM(sr) + ' / 日落 ' + fmtHM(ss) + (inWin ? ' · 当前窗口期' : ''));
+    }
+    factors.push('🌙 月相 ' + moon.name + (moon.note ? '（' + moon.note + '）' : ''));
+    const fEl = Utils.$('wbFactors');
+    if(fEl) fEl.innerHTML = factors.map(function(f){ return '<span>' + f + '</span>'; }).join('');
     const score = calcIndex(data.current.temperature_2m, data.current.wind_speed_10m,
-      days.precipitation_probability_max[0] || 0, data.current.surface_pressure, data.current.relative_humidity_2m);
+      days.precipitation_probability_max[0] || 0, data.current.surface_pressure, data.current.relative_humidity_2m, extras);
     renderScore(score, genTips({ wind: data.current.wind_speed_10m, temp: data.current.temperature_2m,
       precipProb: days.precipitation_probability_max[0] || 0, press: data.current.surface_pressure, hum: data.current.relative_humidity_2m }));
     Utils.$('offlineTip').hidden = !isOffline;
     Utils.$('wbMeta').textContent = metaText('openmeteo');
-    lastData = { temp: data.current.temperature_2m, press: data.current.surface_pressure, hum: data.current.relative_humidity_2m, wind: data.current.wind_speed_10m, precipProb: days.precipitation_probability_max[0] || 0, src:'openmeteo' };
+    lastData = { temp: data.current.temperature_2m, press: data.current.surface_pressure, hum: data.current.relative_humidity_2m, wind: data.current.wind_speed_10m, precipProb: days.precipitation_probability_max[0] || 0, src:'openmeteo', tmax: tmax0, tmin: tmin0, sunrise: fmtHM(sr), sunset: fmtHM(ss), moon: moon.name, yesterdayMax: opt.yesterdayMax || null };
     Bridge.post('weather', { city: currentCity.name, temp: Math.round(data.current.temperature_2m), score });
   }
   function renderAmap(j){
@@ -1690,11 +1817,23 @@ const Weather = (() => {
     });
     Utils.$('daysRow').innerHTML = html || '<div class="day" style="grid-column:1/-1;">暂无预报</div>';
     const windKmh = parseFloat(live.windpower || '0') * 5;
-    const score = calcIndex(parseFloat(live.temperature), windKmh, 20, 1013, parseFloat(live.humidity || '60'));
+    const moonA = moonPhase(new Date());
+    const dt0 = casts[0] ? parseFloat(casts[0].daytemp || 'NaN') : NaN;
+    const nt0 = casts[0] ? parseFloat(casts[0].nighttemp || 'NaN') : NaN;
+    const tmaxA = isFinite(dt0) ? dt0 : null;
+    const tminA = isFinite(nt0) ? nt0 : null;
+    const score = calcIndex(parseFloat(live.temperature), windKmh, 20, 1013, parseFloat(live.humidity || '60'), { tmax: tmaxA, tmin: tminA, moonScore: moonA.score });
     renderScore(score, genTips({ wind: windKmh, temp: parseFloat(live.temperature), precipProb: 20, press: 1013, hum: parseFloat(live.humidity || '60') }));
+    const fElA = Utils.$('wbFactors');
+    if(fElA){
+      const fa = [];
+      if(tmaxA != null && tminA != null) fa.push('🌡️ 昼夜温差 ' + Math.round(tmaxA - tminA) + '°C');
+      fa.push('🌙 月相 ' + moonA.name + (moonA.note ? '（' + moonA.note + '）' : ''));
+      fElA.innerHTML = fa.map(function(x){ return '<span>' + x + '</span>'; }).join('');
+    }
     Utils.$('offlineTip').hidden = true;
     Utils.$('wbMeta').textContent = metaText('amap');
-    lastData = { temp: parseFloat(live.temperature), press: 1013, hum: parseFloat(live.humidity || '60'), wind: windKmh, precipProb: 20, src:'amap' };
+    lastData = { temp: parseFloat(live.temperature), press: 1013, hum: parseFloat(live.humidity || '60'), wind: windKmh, precipProb: 20, src:'amap', tmax: tmaxA, tmin: tminA, moon: moonA.name };
     Bridge.post('weather', { city: currentCity.name, temp: live.temperature, score });
   }
   function renderQw(j){
@@ -1711,13 +1850,16 @@ const Weather = (() => {
     Utils.$('pressInfo').textContent = curPress != null ? Math.round(curPress) + ' hPa' : '--';
     Utils.$('uvInfo').textContent = '--';
     Utils.$('daysRow').innerHTML = '<div class="day" style="grid-column:1/-1;">和风免费版仅实时天气，3日预报需付费版</div>';
+    const moonQ = moonPhase(new Date());
     const score = calcIndex(curTemp != null ? curTemp : 20, curWind != null ? curWind : 5, 20,
-      curPress != null ? curPress : 1013, curHum != null ? curHum : 60);
+      curPress != null ? curPress : 1013, curHum != null ? curHum : 60, { moonScore: moonQ.score });
     renderScore(score, genTips({ wind: curWind != null ? curWind : 5, temp: curTemp != null ? curTemp : 20,
       precipProb: 20, press: curPress != null ? curPress : 1013, hum: curHum != null ? curHum : 60 }));
+    const fElQ = Utils.$('wbFactors');
+    if(fElQ) fElQ.innerHTML = '<span>🌙 月相 ' + moonQ.name + (moonQ.note ? '（' + moonQ.note + '）' : '') + '</span>';
     Utils.$('offlineTip').hidden = true;
     Utils.$('wbMeta').textContent = metaText('qweather');
-    lastData = { temp: curTemp != null ? curTemp : 20, press: curPress != null ? curPress : 1013, hum: curHum != null ? curHum : 60, wind: curWind != null ? curWind : 5, precipProb: 20, src:'qweather' };
+    lastData = { temp: curTemp != null ? curTemp : 20, press: curPress != null ? curPress : 1013, hum: curHum != null ? curHum : 60, wind: curWind != null ? curWind : 5, precipProb: 20, src:'qweather', moon: moonQ.name };
     Bridge.post('weather', { city: currentCity.name, temp: curTemp != null ? Math.round(curTemp) : null, score });
   }
   async function loadWeather(lat, lon){
@@ -1755,13 +1897,20 @@ const Weather = (() => {
       } else {
         const url = 'https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+
           '&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m,uv_index'+
-          '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max'+
+          '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset,wind_speed_10m_max'+
           '&timezone=auto&forecast_days=3';
-        const data = await Utils.fetchJSON(url, 9000);
+        const y = new Date(); y.setDate(y.getDate()-1);
+        const yStr = y.getFullYear() + '-' + ('0' + (y.getMonth()+1)).slice(-2) + '-' + ('0' + y.getDate()).slice(-2);
+        const arcUrl = 'https://archive-api.open-meteo.com/v1/archive?latitude='+lat+'&longitude='+lon+'&start_date='+yStr+'&end_date='+yStr+'&daily=temperature_2m_max&timezone=auto';
+        const results = await Promise.all([
+          Utils.fetchJSON(url, 9000),
+          Utils.fetchJSON(arcUrl, 7000).catch(function(){ return null; })
+        ]);
+        const data = results[0], arc = results[1];
         if(seq !== reqSeq) return;
         isOffline = false;
         lastUpdate = Date.now();
-        renderWeather(data);
+        renderWeather(data, (arc && arc.daily && arc.daily.temperature_2m_max && arc.daily.temperature_2m_max.length) ? { yesterdayMax: arc.daily.temperature_2m_max[0] } : {});
       }
     }catch(e){
       if(seq !== reqSeq) return;
@@ -1999,7 +2148,7 @@ const Weather = (() => {
  * 模块：BaitMatch / BaitView / Calc / Tech / Search / UI / UpdateCheck / boot
  * ============================================================ */
 
-const APP_VERSION = '2.2.5';
+const APP_VERSION = '2.3.0';
 
 /* ============================================================
  * BaitMatch（配饵中心：经典配方 + 收藏到我的饵料）
@@ -2015,6 +2164,30 @@ const BaitMatch = (() => {
   function saveState(){ Store.set(MATCH_KEY, { removed: removed, additions: additions }); }
   function comboList(arr, id, cat){
     return cleanList(arr, id).concat((additions[id] || []).filter(a => a.cat === cat && !isRemoved(id, a.name)).map(a => a.name));
+  }
+  function addOne(nm, cat){
+    const b = findBait(nm);
+    const c = cat || Utils.$('addBaitCat').value;
+    if(!additions[fishId]) additions[fishId] = [];
+    if(additions[fishId].some(function(a){ return a.name === b.name && a.cat === c; })){ Toast.show('该饵料已在方案中', 'warn'); return false; }
+    additions[fishId].push({ name: b.name, cat: c });
+    saveState();
+    render();
+    Toast.show('已添加：' + b.name + '（' + c + '）', 'info');
+    return true;
+  }
+  function renderPick(kw){
+    const box = Utils.$('pickList');
+    if(!box) return;
+    const k = (kw || '').toLowerCase();
+    const items = (DATA.baits || []).filter(function(b){ return !k || (b.brand + b.name + b.flavor + (b.cat || '') + (b.note || '')).toLowerCase().indexOf(k) >= 0; }).slice(0, 15);
+    if(!items.length){ box.innerHTML = '<div class="mb-empty">无匹配饵料，可尝试其他关键词</div>'; return; }
+    box.innerHTML = items.map(function(b){
+      return '<div class="pick-item" data-pick="' + Utils.esc(b.name) + '"><b>' + Utils.esc(b.name) + '</b><span class="p-meta">' + Utils.esc(b.brand) + ' · ' + Utils.esc(b.cat) + ' · ' + Utils.esc(b.flavor) + '</span></div>';
+    }).join('');
+    box.querySelectorAll('[data-pick]').forEach(function(el){
+      el.addEventListener('click', function(){ addOne(el.dataset.pick); });
+    });
   }
   function comboAdvice(mainObjs, stateObjs, addObjs, nestObjs, wd, season){
     const lines = [];
@@ -2166,14 +2339,17 @@ const BaitMatch = (() => {
     const wdHtml = '<div class="weather-bait-advice"><b>🌦️ 今日天气配饵建议：</b><ul>' + weatherAdvice(wd).map(function(t){ return '<li>' + Utils.esc(t) + '</li>'; }).join('') + '</ul></div>';
     const addbarHtml =
       '<div class="bait-addbar"><span>＋ 添加饵料到方案：</span>' +
-      '<input id="addBaitInput" placeholder="输入饵料名称（如：野战蓝鲫）" autocomplete="off">' +
+      '<input id="addBaitInput" placeholder="输入饵料名称" autocomplete="off">' +
       '<select id="addBaitCat"><option value="main">主攻饵</option><option value="state">状态饵</option><option value="add">添加剂</option><option value="nest">窝料</option></select>' +
-      '<button id="addBaitBtn">添加</button></div>';
+      '<button id="addBaitBtn">添加</button>' +
+      '<button id="pickBaitBtn" style="background:#fff;color:#0369a1;border:1px solid #bae6fd;">📚 挑选</button></div>' +
+      '<div class="pick-panel" id="pickPanel" hidden><input id="pickKw" placeholder="搜索饵料名称 / 品牌 / 味型…" autocomplete="off"><div id="pickList"></div></div>';
     const comboHtml = '<div class="combo-advice"><b>💡 天气适配分析（这套饵今天适用吗）：</b><ul>' + comboAdvice(mainObjs, stateObjs, addObjs, nestObjs, wd, season).map(function(t){ return '<li>' + Utils.esc(t) + '</li>'; }).join('') + '</ul></div>';
-    box.innerHTML = wdHtml + addbarHtml +
+    box.innerHTML = wdHtml + comboHtml + addbarHtml +
       '<div style="margin-bottom:6px;display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap;">' +
         ((removedCnt || addedCnt) ? '<span style="font-size:.76rem;color:var(--muted);align-self:center;">已移除 ' + removedCnt + ' 款 / 已添加 ' + addedCnt + ' 款，可重置恢复</span>' : '') +
         '<button class="rel-link amber" id="matchReset" style="border:none;cursor:pointer;">↺ 重置方案</button>' +
+        '<button class="rel-link" id="matchCopy" style="border:none;cursor:pointer;">📋 复制方案</button>' +
       '</div>' +
       '<div class="match-block"><h4><span class="num-dot">1</span>主攻饵（核心）<span style="font-size:.76rem;color:var(--muted);font-weight:400;">＋ 收藏 · ✕ 移除</span></h4><div class="match-items">' + (main || '<span style="color:var(--muted)">暂无（可用活饵替代）</span>') + '</div></div>' +
       (state ? '<div class="match-block"><h4><span class="num-dot">2</span>状态饵（调状态）</h4><div class="match-items">' + state + '</div></div>' : '') +
@@ -2191,18 +2367,33 @@ const BaitMatch = (() => {
       const inp = Utils.$('addBaitInput');
       const nm = inp.value.trim();
       if(!nm){ Toast.show('请输入饵料名称', 'warn'); return; }
-      const b = findBait(nm);
-      const cat = Utils.$('addBaitCat').value;
-      if(!additions[fishId]) additions[fishId] = [];
-      if(additions[fishId].some(function(a){ return a.name === b.name && a.cat === cat; })){ Toast.show('该饵料已在方案中', 'warn'); return; }
-      additions[fishId].push({ name: b.name, cat: cat });
       inp.value = '';
-      saveState();
-      render();
-      Toast.show('已添加：' + b.name + '（' + cat + '）', 'info');
+      addOne(nm);
     });
     const abi = Utils.$('addBaitInput');
     if(abi) abi.addEventListener('keydown', function(e){ if(e.key === 'Enter') Utils.$('addBaitBtn').click(); });
+    const pb = Utils.$('pickBaitBtn');
+    if(pb) pb.addEventListener('click', function(){
+      const pp = Utils.$('pickPanel');
+      if(!pp) return;
+      pp.hidden = !pp.hidden;
+      if(!pp.hidden){ renderPick(''); Utils.$('pickKw').value = ''; }
+    });
+    const pk = Utils.$('pickKw');
+    if(pk) pk.addEventListener('input', function(){ renderPick(pk.value.trim()); });
+    const mc2 = Utils.$('matchCopy');
+    if(mc2) mc2.addEventListener('click', function(){
+      const L = [];
+      L.push('【' + f.name + ' 配饵方案】' + month + '月 · ' + season + '季');
+      const wdTxt = weatherAdvice(wd).join('\n');
+      if(wdTxt) L.push('【今日天气建议】\n' + wdTxt);
+      if(mainObjs.length) L.push('【主攻饵】\n' + mainObjs.map(function(b){ return '· ' + b.brand + ' ' + b.name + (b.waterRatio ? '（水比 ' + b.waterRatio + '）' : ''); }).join('\n'));
+      if(stateObjs.length) L.push('【状态饵】\n' + stateObjs.map(function(b){ return '· ' + b.name + (b.waterRatio ? '（' + b.waterRatio + '）' : ''); }).join('\n'));
+      if(addObjs.length) L.push('【添加剂】\n' + addObjs.map(function(b){ return '· ' + b.name; }).join('\n'));
+      if(nestObjs.length) L.push('【窝料】\n' + nestObjs.map(function(b){ return '· ' + b.name; }).join('\n'));
+      L.push('【作钓要点】\n' + f.tips[season]);
+      copyText(L.join('\n\n'));
+    });
     const c = Utils.$('matchToCalc');
     if(c) c.addEventListener('click', function(){ Utils.$('calcFish').value = fishId; Calc.run(); });
     const g = Utils.$('matchToTech');
@@ -2496,6 +2687,89 @@ const Calc = (() => {
     });
   }
   return { bind: bind, run: run };
+})();
+
+/* ===== 全局工具：复制文本 / 今日速览 / 钓况记录本 ===== */
+function copyText(txt){
+  if(!txt) return;
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(function(){ Toast.show('已复制', 'info'); }).catch(function(){ Toast.show('复制失败，请手动复制', 'warn'); });
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); Toast.show('已复制', 'info'); }catch(e){ Toast.show('复制失败，请手动复制', 'warn'); }
+    ta.remove();
+  }
+}
+function renderToday(){
+  const body = Utils.$('todayBody');
+  if(!body) return;
+  const f = FishContext.getFish();
+  if(!f){ body.innerHTML = '<span style="color:#d8f2f7;">请先选择目标鱼</span>'; return; }
+  const season = (DATA.monthSeason || {})[new Date().getMonth() + 1] || '夏';
+  const wd = (typeof Weather !== 'undefined' && Weather.getLastData) ? Weather.getLastData() : null;
+  const h = [];
+  h.push('<div class="td-item"><b>🎯 目标鱼</b>：' + f.name + ' · 最适水温 ' + f.tempPref.min + '~' + f.tempPref.max + '°C</div>');
+  h.push('<div class="td-item"><b>🎣 推荐钓组</b>：' + Utils.esc(f.rig.main) + ' / ' + Utils.esc(f.rig.sub) + ' · ' + Utils.esc(f.rig.hook) + '</div>');
+  h.push('<div class="td-item"><b>📋 经典配方</b>：' + Utils.esc(f.formula) + '</div>');
+  h.push('<div class="td-item"><b>🗓️ 本月要点（' + season + '季）</b>：' + Utils.esc(f.tips[season] || '') + '</div>');
+  if(wd && typeof wd.temp === 'number'){
+    if(wd.temp < 10) h.push('<div class="td-item"><b>🌡️ 今日用饵</b>：低温，浓腥/红虫为主，加虾粉千里香</div>');
+    else if(wd.temp <= 28) h.push('<div class="td-item"><b>🌡️ 今日用饵</b>：温度适宜，按经典配方开饵即可</div>');
+    else h.push('<div class="td-item"><b>🌡️ 今日用饵</b>：偏热，本味/谷物+少量果酸，避杂鱼</div>');
+    if(wd.moon) h.push('<div class="td-item"><b>🌙 月相</b>：' + wd.moon + (wd.sunrise ? ' · 日出 ' + wd.sunrise + ' / 日落 ' + wd.sunset : '') + '</div>');
+  }
+  h.push('<div class="td-actions"><a href="#s0" class="rel-link">🧮 详细计算</a><a href="#s-bait" class="rel-link">🎣 配饵中心</a><a href="#s-tech" class="rel-link">📖 作战手册</a></div>');
+  body.innerHTML = h.join('');
+}
+const LogBook = (() => {
+  const KEY = 'qiaofa_log_v1';
+  let list = Store.get(KEY, []);
+  function save(){ Store.set(KEY, list); }
+  function todayStr(){ const d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  function render(){
+    const box = Utils.$('logList');
+    if(!box) return;
+    if(!list.length){ box.innerHTML = '<div class="mb-empty">还没有记录，钓完记一笔，越攒越准</div>'; return; }
+    box.innerHTML = list.slice().reverse().map(function(r, i){
+      const idx = list.length - 1 - i;
+      return '<div class="mybait"><b>' + Utils.esc(r.date || '') + ' · ' + Utils.esc(r.spot || '—') + '</b>' +
+        '<span>' + Utils.esc(r.time || '') + '</span>' +
+        (r.fish ? '<span class="tag">' + Utils.esc(r.fish) + '</span>' : '') +
+        (r.count != null ? '<span style="color:var(--brand2);font-weight:700;">' + r.count + ' 条</span>' : '') +
+        (r.weather ? '<span style="color:var(--muted)">☁️ ' + Utils.esc(r.weather) + '</span>' : '') +
+        (r.bait ? '<span style="color:var(--muted)">🎣 ' + Utils.esc(r.bait) + '</span>' : '') +
+        (r.note ? '<span style="color:var(--muted)">📝 ' + Utils.esc(r.note) + '</span>' : '') +
+        '<button class="mb-del" data-del="' + idx + '">删除</button></div>';
+    }).join('');
+    box.querySelectorAll('[data-del]').forEach(function(el){
+      el.addEventListener('click', function(){ list.splice(parseInt(el.dataset.del, 10), 1); save(); render(); Toast.show('已删除', 'info'); });
+    });
+  }
+  function bind(){
+    const ld = Utils.$('logDate'); if(ld) ld.value = todayStr();
+    const lf = Utils.$('logFish');
+    if(lf) lf.innerHTML = FISH_ORDER.map(function(id){ const f = DATA.fishProfiles[id]; return '<option value="' + f.id + '">' + f.name + '</option>'; }).join('');
+    const la = Utils.$('logAdd');
+    if(la) la.addEventListener('click', function(){
+      list.push({
+        date: (Utils.$('logDate') ? Utils.$('logDate').value : '') || todayStr(),
+        spot: Utils.$('logSpot') ? Utils.$('logSpot').value.trim() : '',
+        time: Utils.$('logTime') ? Utils.$('logTime').value : '',
+        fish: lf ? (DATA.fishProfiles[lf.value] ? DATA.fishProfiles[lf.value].name : '') : '',
+        weather: Utils.$('logWeather') ? Utils.$('logWeather').value.trim() : '',
+        bait: Utils.$('logBait') ? Utils.$('logBait').value.trim() : '',
+        count: Utils.$('logCount') ? parseInt(Utils.$('logCount').value, 10) || 0 : 0,
+        note: Utils.$('logNote') ? Utils.$('logNote').value.trim() : ''
+      });
+      save(); render();
+      ['logSpot','logWeather','logBait','logNote'].forEach(function(id){ if(Utils.$(id)) Utils.$(id).value = ''; });
+      Toast.show('已记录本次出钓', 'info');
+    });
+    render();
+  }
+  return { bind: bind, render: render };
 })();
 
 /* ============================================================
@@ -2923,6 +3197,9 @@ const Collapse = (() => {
   Collapse.init();
   Weather.bind();
   Weather.init();
+  LogBook.bind();
+  renderToday();
+  FishContext.onChange(renderToday);
   /* PWA：注册 Service Worker */
   if('serviceWorker' in navigator && location.protocol !== 'file:' && window.isSecureContext){
     window.addEventListener('load', function(){
@@ -2983,6 +3260,20 @@ const Collapse = (() => {
     e.preventDefault();
     var cb = document.getElementById('checkBtn');
     if(cb) cb.click();
+  });
+
+  /* PWA 安装引导 */
+  var deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', function(e){
+    e.preventDefault();
+    deferredPrompt = e;
+    var ib = document.getElementById('installBtn');
+    if(ib) ib.hidden = false;
+  });
+  var ib2 = document.getElementById('installBtn');
+  if(ib2) ib2.addEventListener('click', function(){
+    if(deferredPrompt){ deferredPrompt.prompt(); }
+    else Toast.show('当前浏览器暂不支持直接安装，可用浏览器菜单「添加到主屏幕」', 'warn');
   });
 
   /* 顶部显示当前版本（与页脚版本同源） */
