@@ -417,6 +417,16 @@ tailwind.config = {
   .combo-advice b{font-weight:700;}
   .combo-advice ul{margin-top:4px;}
   .combo-advice li{margin-left:18px;margin-bottom:3px;}
+  /* 暗色图标对比优化 */
+  html.dark .day, html.dark .wb-detail span, html.dark .wb-factors span{filter:brightness(1.15) contrast(1.06);}
+  html.dark .day b, html.dark .wb-tips li b{color:#f8fafc;}
+  /* 离线/无 Tailwind 兜底：关键交互不依赖 CDN */
+  .pick-panel[hidden], #installBtn[hidden]{display:none;}
+  button:focus-visible{outline:2px solid #0ea5e9;outline-offset:2px;}
+  .svg-diagram{max-width:100%;height:auto;display:block;}
+  .svg-diagram text{fill:#1e293b;font-family:inherit;}
+  html.dark .svg-diagram text{fill:#e2e8f0;}
+  .svg-guide .grid{grid-template-columns:repeat(auto-fit,minmax(320px,1fr));}
 </style>
 </head>
 <body>
@@ -632,6 +642,51 @@ tailwind.config = {
           <li><b>罗非</b>：大福寿+冷冻饵 1:1；黑坑用散炮黄面面抢鱼</li>
         </ul>
       </div>
+      <div class="svg-guide">
+        <h3 class="sub">🧪 开饵四步 & 红虫挂法图解</h3>
+        <div class="grid">
+          <div class="card">
+            <h4>开饵四步（邓刚/化氏通用）</h4>
+            <svg class="svg-diagram" viewBox="0 0 460 130" xmlns="http://www.w3.org/2000/svg">
+              <g transform="translate(0,20)">
+                <path d="M20 0 h34 v38 h-34 z" fill="none" stroke="#0ea5e9" stroke-width="2.5"/>
+                <line x1="18" y1="10" x2="56" y2="10" stroke="#0ea5e9" stroke-width="1.5"/>
+                <line x1="30" y1="24" x2="30" y2="34" stroke="#38bdf8" stroke-width="2.5"/>
+                <text x="8" y="62" font-size="11">① 量杯量饵/水</text>
+              </g>
+              <g transform="translate(115,20)">
+                <path d="M20 6 a18 14 0 0 1 36 0 z" fill="none" stroke="#0ea5e9" stroke-width="2.5"/>
+                <path d="M38 30 a18 16 0 0 1 -28 -8 q-6 -4 6 -6 q14 2 26 8" fill="none" stroke="#64748b" stroke-width="2"/>
+                <text x="8" y="62" font-size="11">② 快速搅拌</text>
+              </g>
+              <g transform="translate(230,20)">
+                <circle cx="40" cy="22" r="20" fill="none" stroke="#0ea5e9" stroke-width="2.5"/>
+                <line x1="40" y1="22" x2="52" y2="12" stroke="#64748b" stroke-width="2.5"/>
+                <line x1="40" y1="22" x2="40" y2="8" stroke="#64748b" stroke-width="2"/>
+                <text x="12" y="62" font-size="11">③ 静置 3-5 分钟</text>
+              </g>
+              <g transform="translate(345,20)">
+                <circle cx="40" cy="20" r="18" fill="#e0f2fe" stroke="#0369a1" stroke-width="2.5"/>
+                <circle cx="36" cy="16" r="4" fill="#64748b"/>
+                <text x="20" y="62" font-size="11">④ 轻揉成团</text>
+              </g>
+            </svg>
+          </div>
+          <div class="card">
+            <h4>红虫挂法</h4>
+            <svg class="svg-diagram" viewBox="0 0 360 140" xmlns="http://www.w3.org/2000/svg">
+              <path d="M180 10 q-9 0 -9 12 q0 16 18 16" fill="none" stroke="#334155" stroke-width="3"/>
+              <line x1="140" y1="38" x2="180" y2="38" stroke="#dc2626" stroke-width="3.5"/>
+              <line x1="136" y1="50" x2="180" y2="50" stroke="#dc2626" stroke-width="3.5"/>
+              <line x1="132" y1="62" x2="180" y2="62" stroke="#dc2626" stroke-width="3.5"/>
+              <line x1="180" y1="38" x2="180" y2="80" stroke="#dc2626" stroke-width="3.5"/>
+              <text x="30" y="34" font-size="12">横穿 2-3 条</text>
+              <text x="30" y="78" font-size="12">+ 竖穿 1-2 条</text>
+              <text x="30" y="116" font-size="11" fill="#0e7490">或用红虫夹捆 3-4 条蘸浓腥粉</text>
+            </svg>
+          </div>
+        </div>
+      </div>
       <div class="bait-filter">
         <select id="baitFish"><option value="">全部鱼种</option></select>
         <select id="baitBrand"><option value="">全部品牌</option></select>
@@ -653,6 +708,50 @@ tailwind.config = {
       <span>🎯 目标鱼：</span>
       <select id="techFish"></select>
       <span style="font-size:.8rem;color:var(--muted);">选鱼后自动聚焦该鱼适用的内容</span>
+    </div>
+    <div class="svg-guide">
+      <h3 class="sub">📐 钓组结构与竿稍信号图解</h3>
+      <div class="grid">
+        <div class="card">
+          <h4>桥筏钓组结构</h4>
+          <svg class="svg-diagram" viewBox="0 0 460 240" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 70 Q230 -20 440 70" fill="none" stroke="#0ea5e9" stroke-width="6"/>
+            <line x1="20" y1="70" x2="440" y2="70" stroke="#0ea5e9" stroke-width="3"/>
+            <line x1="60" y1="40" x2="60" y2="70" stroke="#64748b" stroke-width="3"/>
+            <line x1="400" y1="40" x2="400" y2="70" stroke="#64748b" stroke-width="3"/>
+            <line x1="230" y1="78" x2="230" y2="42" stroke="#0369a1" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="230" cy="40" r="5" fill="#dc2626"/>
+            <line x1="230" y1="82" x2="230" y2="138" stroke="#0ea5e9" stroke-width="3" stroke-dasharray="6 3"/>
+            <rect x="218" y="140" width="24" height="16" rx="4" fill="#64748b"/>
+            <circle cx="230" cy="168" r="7" fill="none" stroke="#0e7490" stroke-width="3"/>
+            <line x1="226" y1="176" x2="206" y2="204" stroke="#0369a1" stroke-width="2"/>
+            <line x1="234" y1="176" x2="254" y2="204" stroke="#0369a1" stroke-width="2"/>
+            <path d="M206 204 q-8 0 -8 10 q0 14 16 14" fill="none" stroke="#334155" stroke-width="2.5"/>
+            <path d="M254 204 q8 0 8 10 q0 14 -16 14" fill="none" stroke="#334155" stroke-width="2.5"/>
+            <text x="248" y="46" font-size="12">竿稍</text>
+            <text x="252" y="96" font-size="11">主线</text>
+            <text x="256" y="152" font-size="11">通心铅</text>
+            <text x="252" y="173" font-size="11">八字环</text>
+            <text x="196" y="234" font-size="11">双钩触底</text>
+          </svg>
+        </div>
+        <div class="card">
+          <h4>竿稍信号识别</h4>
+          <svg class="svg-diagram" viewBox="0 0 460 190" xmlns="http://www.w3.org/2000/svg">
+            <line x1="10" y1="40" x2="150" y2="40" stroke="#0369a1" stroke-width="4" stroke-linecap="round"/>
+            <path d="M150 40 q30 -12 60 -8 q30 4 60 -6" fill="none" stroke="#dc2626" stroke-width="2.5"/>
+            <text x="12" y="66" font-size="12">鲫鱼 · 连续小幅点动</text>
+            <line x1="10" y1="95" x2="150" y2="95" stroke="#0369a1" stroke-width="4" stroke-linecap="round"/>
+            <path d="M150 95 q40 25 120 35" fill="none" stroke="#0e7490" stroke-width="3"/>
+            <text x="12" y="150" font-size="12">鲤/青 · 缓慢大弯弓</text>
+            <line x1="270" y1="40" x2="400" y2="40" stroke="#0369a1" stroke-width="4" stroke-linecap="round"/>
+            <path d="M400 40 q15 25 15 55" fill="none" stroke="#c2410c" stroke-width="3"/>
+            <line x1="330" y1="52" x2="330" y2="70" stroke="#dc2626" stroke-width="2"/>
+            <line x1="382" y1="52" x2="382" y2="70" stroke="#dc2626" stroke-width="2"/>
+            <text x="272" y="130" font-size="12">黄颡/鲶 · 黑漂回线</text>
+          </svg>
+        </div>
+      </div>
     </div>
     <div class="tech-nav" id="techNav">
       <a href="#t-spots">① 选位标点</a>
@@ -736,10 +835,10 @@ tailwind.config = {
  * 单独维护此文件并上传覆盖，即可全站更新数据（页面自动检测新版本）。
  * 字段说明见各区块注释。本文件仅包含数据，不含业务逻辑。
  * ============================================================ */
-window.QIAOFA_DATA_VERSION = '2.3.0';
+window.QIAOFA_DATA_VERSION = '2.3.1';
 
 window.QIAOFA_DATA = {
-  version: '2.3.0',
+  version: '2.3.1',
   updatedAt: '2026-09-23',
 
   /* 月份 → 季节映射（计算器按月份联动季节） */
@@ -2148,7 +2247,7 @@ const Weather = (() => {
  * 模块：BaitMatch / BaitView / Calc / Tech / Search / UI / UpdateCheck / boot
  * ============================================================ */
 
-const APP_VERSION = '2.3.0';
+const APP_VERSION = '2.3.1';
 
 /* ============================================================
  * BaitMatch（配饵中心：经典配方 + 收藏到我的饵料）
