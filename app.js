@@ -140,7 +140,7 @@ const Weather = (() => {
   const fallbackWeather = {
     current: { temperature_2m: 25, weather_code: 2, wind_speed_10m: 12, wind_direction_10m: 135,
       relative_humidity_2m: 75, apparent_temperature: 27, surface_pressure: 1013, uv_index: 5 },
-    daily: { weather_code: [2,3,61], temperature_2m_max: [28,29,26], temperature_2m_min: [20,21,19], precipitation_probability_max: [20,40,70] }
+    daily: { weather_code: [2,3,61], temperature_2m_max: [28,29,26], temperature_2m_min: [20,21,19], precipitation_probability_max: [20,40,70], sunrise: ['06:30','06:31','06:32'], sunset: ['18:30','18:29','18:28'] }
   };
   let cfg = Object.assign({ src: 'openmeteo', key: '' }, Store.get(CFG_KEY, {}));
   let currentCity = { name: '', lat: null, lon: null };
@@ -174,7 +174,39 @@ const Weather = (() => {
     const dirs=['北','东北','东','东南','南','西南','西','西北'];
     return dirs[Math.round((((deg%360)+360)%360)/45)%8];
   }
-  function calcIndex(t, windKmh, precipProb, press, hum){
+  /* 月相计算（基于日期的月龄近似） */
+  function moonPhase(d){
+    const syn = 29.53058867;
+    const ref = Date.UTC(2000, 0, 6, 18, 14, 0);
+    const age = ((d.getTime() - ref) / 86400000) % syn;
+    const a = (age + syn) % syn;
+    if(a < 1.8) return { name:'新月', score: -2, note:'夜黑' };
+    if(a < 6.4) return { name:'娥眉月', score: 0, note:'' };
+    if(a < 8.8) return { name:'上弦月', score: 1, note:'夜钓光线渐好' };
+    if(a < 13.3) return { name:'盈凸月', score: 2, note:'' };
+    if(a < 15.8) return { name:'满月', score: 3, note:'夜钓光线好，大物活跃' };
+    if(a < 19.3) return { name:'亏凸月', score: 2, note:'' };
+    if(a < 23.6) return { name:'下弦月', score: 1, note:'后半夜月明' };
+    if(a < 27.6) return { name:'残月', score: 0, note:'' };
+    return { name:'新月', score: -2, note:'夜黑' };
+  }
+  function toHour(v){
+    if(!v) return null;
+    let h = null;
+    try{ const d = new Date(v); if(!isNaN(d.getTime())) h = d.getHours() + d.getMinutes()/60; }catch(e){}
+    if(h == null && typeof v === 'string' && /^\d{1,2}:\d{2}/.test(v)){
+      const p = v.split(':');
+      h = parseFloat(p[0]) + parseFloat(p[1])/60;
+    }
+    return h;
+  }
+  function fmtHM(v){
+    if(!v) return '--';
+    if(typeof v === 'string' && /^\d{1,2}:\d{2}/.test(v)) return v;
+    try{ const d = new Date(v); if(!isNaN(d.getTime())) return ('0'+d.getHours()).slice(-2) + ':' + ('0'+d.getMinutes()).slice(-2); }catch(e){}
+    return '--';
+  }
+  function calcIndex(t, windKmh, precipProb, press, hum, extras){
     const pref = FishContext.getFish() ? FishContext.getFish().tempPref : null;
     let s = 60;
     if(pref && isFinite(pref.min) && isFinite(pref.max)){
@@ -192,6 +224,30 @@ const Weather = (() => {
     else if(precipProb <= 70) s -= 10; else s -= 20;
     if(press>=1002 && press<=1022) s += 10; else if(press<995 || press>1030) s -= 10;
     if(hum>=50 && hum<=80) s += 5; else if(hum>90) s -= 5;
+    /* 新增维度：昼夜温差 / 昨日骤变 / 日出日落窗口 / 月相 */
+    if(extras){
+      if(extras.tmax != null && extras.tmin != null){
+        const diff = extras.tmax - extras.tmin;
+        if(diff <= 6) s += 8;
+        else if(diff <= 9) s += 2;
+        else if(diff <= 12) s -= 6;
+        else s -= 12;
+      }
+      if(extras.yesterdayMax != null && extras.tmax != null){
+        const jump = Math.abs(extras.tmax - extras.yesterdayMax);
+        if(jump >= 8) s -= 10;
+        else if(jump >= 5) s -= 4;
+        else s += 2;
+      }
+      if(extras.sunriseH != null && extras.sunsetH != null){
+        const now = new Date();
+        const hr = now.getHours() + now.getMinutes()/60;
+        if(hr >= extras.sunriseH - 0.5 && hr <= extras.sunriseH + 1.5) s += 8;
+        else if(hr >= extras.sunsetH - 2 && hr <= extras.sunsetH + 0.5) s += 8;
+        else if(hr >= 11 && hr <= 15) s -= 6;
+      }
+      if(extras.moonScore != null) s += extras.moonScore;
+    }
     if(!isFinite(s)) s = 50;
     return Math.max(0, Math.min(100, s));
   }
@@ -254,8 +310,9 @@ const Weather = (() => {
     lvEl.style.color = '#fff';
     Utils.$('fishTips').innerHTML = '💡 作钓建议（目标鱼：' + (FishContext.getFish() ? FishContext.getFish().name : '综合') + '）：<ul>' + tips.map(t => '<li>' + Utils.esc(t) + '</li>').join('') + '</ul>';
   }
-  function renderWeather(data){
+  function renderWeather(data, opt){
     if(!data || !data.current || !data.daily) throw new Error('天气数据格式异常');
+    opt = opt || {};
     Utils.$('cityName').textContent = currentCity.name || '当前位置';
     Utils.$('curTemp').textContent = Math.round(data.current.temperature_2m);
     Utils.$('curDesc').textContent = codeIcon(data.current.weather_code)+' '+codeText(data.current.weather_code);
@@ -274,18 +331,43 @@ const Weather = (() => {
       const tmax = days.temperature_2m_max[i] != null ? Math.round(days.temperature_2m_max[i]) : '--';
       const tmin = days.temperature_2m_min[i] != null ? Math.round(days.temperature_2m_min[i]) : '--';
       const pprob = days.precipitation_probability_max[i] != null ? days.precipitation_probability_max[i] : '-';
+      const dw = days.wind_speed_10m_max != null && days.wind_speed_10m_max[i] != null ? windLevel(days.wind_speed_10m_max[i]) : null;
       html += '<div class="day"><div>'+label+'</div><div>'+codeIcon(wc)+'</div>'+
               '<div><b>'+tmax+'°</b> / '+tmin+'°</div>'+
-              '<div>💧'+pprob+'%</div></div>';
+              '<div>💧'+pprob+'%'+(dw != null ? ' · 💨'+dw+'级' : '')+'</div></div>';
     }
     Utils.$('daysRow').innerHTML = html;
+    const tmax0 = days.temperature_2m_max[0] != null ? days.temperature_2m_max[0] : null;
+    const tmin0 = days.temperature_2m_min[0] != null ? days.temperature_2m_min[0] : null;
+    const sr = days.sunrise ? days.sunrise[0] : null;
+    const ss = days.sunset ? days.sunset[0] : null;
+    const moon = moonPhase(new Date());
+    const sunriseH = toHour(sr), sunsetH = toHour(ss);
+    const extras = { tmax: tmax0, tmin: tmin0, yesterdayMax: opt.yesterdayMax || null, sunriseH: sunriseH, sunsetH: sunsetH, moonScore: moon.score };
+    const factors = [];
+    if(tmax0 != null && tmin0 != null){
+      const diff = Math.round(tmax0 - tmin0);
+      factors.push('🌡️ 昼夜温差 ' + diff + '°C' + (diff <= 6 ? '（稳定）' : diff <= 9 ? '（正常）' : diff <= 12 ? '（偏大）' : '（大·口易乱）'));
+    }
+    if(opt.yesterdayMax != null && tmax0 != null){
+      const jump = Math.round(Math.abs(tmax0 - opt.yesterdayMax));
+      factors.push('🔄 昨→今最高 ' + Math.round(opt.yesterdayMax) + '→' + Math.round(tmax0) + '°C' + (jump >= 8 ? '（骤变·减分）' : jump >= 5 ? '（波动）' : '（平稳）'));
+    }
+    if(sr || ss){
+      const now = new Date(); const hr = now.getHours() + now.getMinutes()/60;
+      const inWin = (sunriseH != null && hr >= sunriseH - 0.5 && hr <= sunriseH + 1.5) || (sunsetH != null && hr >= sunsetH - 2 && hr <= sunsetH + 0.5);
+      factors.push('🌅 日出 ' + fmtHM(sr) + ' / 日落 ' + fmtHM(ss) + (inWin ? ' · 当前窗口期' : ''));
+    }
+    factors.push('🌙 月相 ' + moon.name + (moon.note ? '（' + moon.note + '）' : ''));
+    const fEl = Utils.$('wbFactors');
+    if(fEl) fEl.innerHTML = factors.map(function(f){ return '<span>' + f + '</span>'; }).join('');
     const score = calcIndex(data.current.temperature_2m, data.current.wind_speed_10m,
-      days.precipitation_probability_max[0] || 0, data.current.surface_pressure, data.current.relative_humidity_2m);
+      days.precipitation_probability_max[0] || 0, data.current.surface_pressure, data.current.relative_humidity_2m, extras);
     renderScore(score, genTips({ wind: data.current.wind_speed_10m, temp: data.current.temperature_2m,
       precipProb: days.precipitation_probability_max[0] || 0, press: data.current.surface_pressure, hum: data.current.relative_humidity_2m }));
     Utils.$('offlineTip').hidden = !isOffline;
     Utils.$('wbMeta').textContent = metaText('openmeteo');
-    lastData = { temp: data.current.temperature_2m, press: data.current.surface_pressure, hum: data.current.relative_humidity_2m, wind: data.current.wind_speed_10m, precipProb: days.precipitation_probability_max[0] || 0, src:'openmeteo' };
+    lastData = { temp: data.current.temperature_2m, press: data.current.surface_pressure, hum: data.current.relative_humidity_2m, wind: data.current.wind_speed_10m, precipProb: days.precipitation_probability_max[0] || 0, src:'openmeteo', tmax: tmax0, tmin: tmin0, sunrise: fmtHM(sr), sunset: fmtHM(ss), moon: moon.name, yesterdayMax: opt.yesterdayMax || null };
     Bridge.post('weather', { city: currentCity.name, temp: Math.round(data.current.temperature_2m), score });
   }
   function renderAmap(j){
@@ -310,11 +392,23 @@ const Weather = (() => {
     });
     Utils.$('daysRow').innerHTML = html || '<div class="day" style="grid-column:1/-1;">暂无预报</div>';
     const windKmh = parseFloat(live.windpower || '0') * 5;
-    const score = calcIndex(parseFloat(live.temperature), windKmh, 20, 1013, parseFloat(live.humidity || '60'));
+    const moonA = moonPhase(new Date());
+    const dt0 = casts[0] ? parseFloat(casts[0].daytemp || 'NaN') : NaN;
+    const nt0 = casts[0] ? parseFloat(casts[0].nighttemp || 'NaN') : NaN;
+    const tmaxA = isFinite(dt0) ? dt0 : null;
+    const tminA = isFinite(nt0) ? nt0 : null;
+    const score = calcIndex(parseFloat(live.temperature), windKmh, 20, 1013, parseFloat(live.humidity || '60'), { tmax: tmaxA, tmin: tminA, moonScore: moonA.score });
     renderScore(score, genTips({ wind: windKmh, temp: parseFloat(live.temperature), precipProb: 20, press: 1013, hum: parseFloat(live.humidity || '60') }));
+    const fElA = Utils.$('wbFactors');
+    if(fElA){
+      const fa = [];
+      if(tmaxA != null && tminA != null) fa.push('🌡️ 昼夜温差 ' + Math.round(tmaxA - tminA) + '°C');
+      fa.push('🌙 月相 ' + moonA.name + (moonA.note ? '（' + moonA.note + '）' : ''));
+      fElA.innerHTML = fa.map(function(x){ return '<span>' + x + '</span>'; }).join('');
+    }
     Utils.$('offlineTip').hidden = true;
     Utils.$('wbMeta').textContent = metaText('amap');
-    lastData = { temp: parseFloat(live.temperature), press: 1013, hum: parseFloat(live.humidity || '60'), wind: windKmh, precipProb: 20, src:'amap' };
+    lastData = { temp: parseFloat(live.temperature), press: 1013, hum: parseFloat(live.humidity || '60'), wind: windKmh, precipProb: 20, src:'amap', tmax: tmaxA, tmin: tminA, moon: moonA.name };
     Bridge.post('weather', { city: currentCity.name, temp: live.temperature, score });
   }
   function renderQw(j){
@@ -331,13 +425,16 @@ const Weather = (() => {
     Utils.$('pressInfo').textContent = curPress != null ? Math.round(curPress) + ' hPa' : '--';
     Utils.$('uvInfo').textContent = '--';
     Utils.$('daysRow').innerHTML = '<div class="day" style="grid-column:1/-1;">和风免费版仅实时天气，3日预报需付费版</div>';
+    const moonQ = moonPhase(new Date());
     const score = calcIndex(curTemp != null ? curTemp : 20, curWind != null ? curWind : 5, 20,
-      curPress != null ? curPress : 1013, curHum != null ? curHum : 60);
+      curPress != null ? curPress : 1013, curHum != null ? curHum : 60, { moonScore: moonQ.score });
     renderScore(score, genTips({ wind: curWind != null ? curWind : 5, temp: curTemp != null ? curTemp : 20,
       precipProb: 20, press: curPress != null ? curPress : 1013, hum: curHum != null ? curHum : 60 }));
+    const fElQ = Utils.$('wbFactors');
+    if(fElQ) fElQ.innerHTML = '<span>🌙 月相 ' + moonQ.name + (moonQ.note ? '（' + moonQ.note + '）' : '') + '</span>';
     Utils.$('offlineTip').hidden = true;
     Utils.$('wbMeta').textContent = metaText('qweather');
-    lastData = { temp: curTemp != null ? curTemp : 20, press: curPress != null ? curPress : 1013, hum: curHum != null ? curHum : 60, wind: curWind != null ? curWind : 5, precipProb: 20, src:'qweather' };
+    lastData = { temp: curTemp != null ? curTemp : 20, press: curPress != null ? curPress : 1013, hum: curHum != null ? curHum : 60, wind: curWind != null ? curWind : 5, precipProb: 20, src:'qweather', moon: moonQ.name };
     Bridge.post('weather', { city: currentCity.name, temp: curTemp != null ? Math.round(curTemp) : null, score });
   }
   async function loadWeather(lat, lon){
@@ -375,13 +472,20 @@ const Weather = (() => {
       } else {
         const url = 'https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+
           '&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m,uv_index'+
-          '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max'+
+          '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset,wind_speed_10m_max'+
           '&timezone=auto&forecast_days=3';
-        const data = await Utils.fetchJSON(url, 9000);
+        const y = new Date(); y.setDate(y.getDate()-1);
+        const yStr = y.getFullYear() + '-' + ('0' + (y.getMonth()+1)).slice(-2) + '-' + ('0' + y.getDate()).slice(-2);
+        const arcUrl = 'https://archive-api.open-meteo.com/v1/archive?latitude='+lat+'&longitude='+lon+'&start_date='+yStr+'&end_date='+yStr+'&daily=temperature_2m_max&timezone=auto';
+        const results = await Promise.all([
+          Utils.fetchJSON(url, 9000),
+          Utils.fetchJSON(arcUrl, 7000).catch(function(){ return null; })
+        ]);
+        const data = results[0], arc = results[1];
         if(seq !== reqSeq) return;
         isOffline = false;
         lastUpdate = Date.now();
-        renderWeather(data);
+        renderWeather(data, (arc && arc.daily && arc.daily.temperature_2m_max && arc.daily.temperature_2m_max.length) ? { yesterdayMax: arc.daily.temperature_2m_max[0] } : {});
       }
     }catch(e){
       if(seq !== reqSeq) return;
