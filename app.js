@@ -148,6 +148,7 @@ const Weather = (() => {
   let reqSeq = 0;
   let lastUpdate = null;
   let lastData = null;
+  let loadRetried = false;
 
   function codeText(c){
     if(c===0) return '晴'; if(c===1) return '基本晴朗'; if(c===2) return '多云'; if(c===3) return '阴';
@@ -458,6 +459,7 @@ const Weather = (() => {
         if(seq !== reqSeq) return;
         if(j.status !== '1') throw new Error('高德天气返回错误：' + (j.info || ''));
         isOffline = false;
+        loadRetried = false;
         lastUpdate = Date.now();
         renderAmap(j);
       } else if(cfg.src === 'qweather'){
@@ -467,6 +469,7 @@ const Weather = (() => {
         if(seq !== reqSeq) return;
         if(j.code !== '200') throw new Error('和风天气返回错误码 '+j.code);
         isOffline = false;
+        loadRetried = false;
         lastUpdate = Date.now();
         renderQw(j);
       } else {
@@ -484,16 +487,25 @@ const Weather = (() => {
         const data = results[0], arc = results[1];
         if(seq !== reqSeq) return;
         isOffline = false;
+        loadRetried = false;
         lastUpdate = Date.now();
         renderWeather(data, (arc && arc.daily && arc.daily.temperature_2m_max && arc.daily.temperature_2m_max.length) ? { yesterdayMax: arc.daily.temperature_2m_max[0] } : {});
       }
     }catch(e){
       if(seq !== reqSeq) return;
+      if(!loadRetried && !Env.isFile){
+        loadRetried = true;
+        Toast.show('天气获取失败，3 秒后自动重试…', 'warn');
+        setTimeout(function(){ loadWeather(lat, lon); }, 3000);
+        return;
+      }
+      loadRetried = false;
       isOffline = true;
       let msg;
-      if(e && e.name === 'AbortError') msg = '天气请求超时，已切换离线参考数据。';
-      else if(Env.isFile) msg = '本地 file:// 模式部分接口可能被拦截，已切换离线参考数据（推荐部署到 HTTPS 使用）。';
-      else msg = '天气获取失败（'+(e && e.message ? e.message : '网络错误')+'），已切换离线参考数据。';
+      if(e && e.name === 'AbortError') msg = '天气请求超时（网络慢），已用离线参考数据；稍后可点 🔄 重试';
+      else if(e && e.message && /^HTTP/.test(e.message)) msg = '天气接口返回异常（' + e.message + '），已用离线参考数据';
+      else if(Env.isFile) msg = '本地 file:// 模式部分接口可能被拦截，已用离线参考数据（部署到 HTTPS 后完整生效）';
+      else msg = '网络无法连接天气服务，已用离线参考数据；可手动输入城市或稍后重试';
       showError(msg);
       Toast.show('天气获取失败，已使用离线参考数据', 'warn');
       lastUpdate = null;
@@ -599,7 +611,7 @@ const Weather = (() => {
         return;
       }
       const fb = (currentCity && currentCity.lat) ? currentCity : yibinDistricts['叙州'];
-      Toast.show(msg + '，已回退' + fb.name, 'warn');
+      Toast.show(msg + '，已回退' + fb.name + '；可手动输入城市名更准', 'warn');
       currentCity = { name: fb.name, lat: fb.lat, lon: fb.lon, userSet: true };
       saveCity();
       await loadWeather(fb.lat, fb.lon);
