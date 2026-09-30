@@ -477,19 +477,24 @@ const Weather = (() => {
           '&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m,uv_index'+
           '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset,wind_speed_10m_max'+
           '&timezone=auto&forecast_days=3';
-        const y = new Date(); y.setDate(y.getDate()-1);
-        const yStr = y.getFullYear() + '-' + ('0' + (y.getMonth()+1)).slice(-2) + '-' + ('0' + y.getDate()).slice(-2);
-        const arcUrl = 'https://archive-api.open-meteo.com/v1/archive?latitude='+lat+'&longitude='+lon+'&start_date='+yStr+'&end_date='+yStr+'&daily=temperature_2m_max&timezone=auto';
-        const results = await Promise.all([
-          Utils.fetchJSON(url, 9000),
-          Utils.fetchJSON(arcUrl, 7000).catch(function(){ return null; })
-        ]);
-        const data = results[0], arc = results[1];
+        const data = await Utils.fetchJSON(url, 8000);
         if(seq !== reqSeq) return;
         isOffline = false;
         loadRetried = false;
         lastUpdate = Date.now();
-        renderWeather(data, (arc && arc.daily && arc.daily.temperature_2m_max && arc.daily.temperature_2m_max.length) ? { yesterdayMax: arc.daily.temperature_2m_max[0] } : {});
+        renderWeather(data, {});
+        /* 昨日最高温：后台补齐（不阻塞天气显示，失败静默） */
+        const y = new Date(); y.setDate(y.getDate()-1);
+        const yStr = y.getFullYear() + '-' + ('0' + (y.getMonth()+1)).slice(-2) + '-' + ('0' + y.getDate()).slice(-2);
+        const arcUrl = 'https://archive-api.open-meteo.com/v1/archive?latitude='+lat+'&longitude='+lon+'&start_date='+yStr+'&end_date='+yStr+'&daily=temperature_2m_max&timezone=auto';
+        (function(){
+          Utils.fetchJSON(arcUrl, 6000).then(function(arc){
+            if(seq !== reqSeq) return;
+            if(arc && arc.daily && arc.daily.temperature_2m_max && arc.daily.temperature_2m_max.length){
+              renderWeather(data, { yesterdayMax: arc.daily.temperature_2m_max[0] });
+            }
+          }).catch(function(){});
+        })();
       }
     }catch(e){
       if(seq !== reqSeq) return;
