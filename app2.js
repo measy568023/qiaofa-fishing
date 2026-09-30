@@ -4,7 +4,7 @@
  * 模块：BaitMatch / BaitView / Calc / Tech / Search / UI / UpdateCheck / boot
  * ============================================================ */
 
-const APP_VERSION = '2.3.2';
+const APP_VERSION = '2.3.3';
 
 /* ============================================================
  * BaitMatch（配饵中心：经典配方 + 收藏到我的饵料）
@@ -192,7 +192,6 @@ const BaitMatch = (() => {
       ? '黑坑模式：鱼密度高、开口快，建议散炮/黄面面抢鱼，线组可略放粗 0.5 号，饵料味型加重。'
       : '野钓模式：窝量适中，避免重窝惊鱼；守大物时窝料加倍。';
     const wd = (typeof Weather !== 'undefined' && Weather.getLastData) ? Weather.getLastData() : null;
-    const wdHtml = '<div class="weather-bait-advice"><b>🌦️ 今日天气配饵建议：</b><ul>' + weatherAdvice(wd).map(function(t){ return '<li>' + Utils.esc(t) + '</li>'; }).join('') + '</ul></div>';
     const addbarHtml =
       '<div class="bait-addbar"><span>＋ 添加饵料到方案：</span>' +
       '<input id="addBaitInput" placeholder="输入饵料名称" autocomplete="off">' +
@@ -201,7 +200,7 @@ const BaitMatch = (() => {
       '<button id="pickBaitBtn" style="background:#fff;color:#0369a1;border:1px solid #bae6fd;">📚 挑选</button></div>' +
       '<div class="pick-panel" id="pickPanel" hidden><input id="pickKw" placeholder="搜索饵料名称 / 品牌 / 味型…" autocomplete="off"><div id="pickList"></div></div>';
     const comboHtml = '<div class="combo-advice"><b>💡 天气适配分析（这套饵今天适用吗）：</b><ul>' + comboAdvice(mainObjs, stateObjs, addObjs, nestObjs, wd, season).map(function(t){ return '<li>' + Utils.esc(t) + '</li>'; }).join('') + '</ul></div>';
-    box.innerHTML = wdHtml + comboHtml + addbarHtml +
+    box.innerHTML = comboHtml + addbarHtml +
       '<div style="margin-bottom:6px;display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap;">' +
         ((removedCnt || addedCnt) ? '<span style="font-size:.76rem;color:var(--muted);align-self:center;">已移除 ' + removedCnt + ' 款 / 已添加 ' + addedCnt + ' 款，可重置恢复</span>' : '') +
         '<button class="rel-link amber" id="matchReset" style="border:none;cursor:pointer;">↺ 重置方案</button>' +
