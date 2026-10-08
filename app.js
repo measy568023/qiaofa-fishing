@@ -211,13 +211,40 @@ const Weather = (() => {
     const pref = FishContext.getFish() ? FishContext.getFish().tempPref : null;
     let s = 60;
     if(pref && isFinite(pref.min) && isFinite(pref.max)){
-      if(t >= pref.min && t <= pref.max) s += 20;
-      else if(t >= pref.min - 5 && t <= pref.max + 5) s += 8;
+      if(t >= pref.min && t <= pref.max) s += 12;
+      else if(t >= pref.min - 5 && t <= pref.max + 5) s += 4;
       else if(t < pref.min - 10 || t > pref.max + 10) s -= 20;
       else s -= 8;
     } else {
-      if(t>=15 && t<=28) s += 20; else if(t>=8 && t<15) s += 10;
-      else if(t>28 && t<=33) s += 5; else if(t<0 || t>35) s -= 20; else if(t<5) s -= 10;
+      if(t>=15 && t<=28) s += 12; else if(t>=8 && t<15) s += 6;
+      else if(t>28 && t<=33) s += 3; else if(t<0 || t>35) s -= 20; else if(t<5) s -= 10;
+    }
+    if(windKmh <= 8) s += 6; else if(windKmh <= 19) s += 3;
+    else if(windKmh <= 29) s -= 10; else s -= 25;
+    if(precipProb <= 10) s += 6; else if(precipProb <= 40) s += 0;
+    else if(precipProb <= 70) s -= 10; else s -= 20;
+    if(press>=1002 && press<=1022) s += 6; else if(press<995 || press>1030) s -= 10;
+    if(hum>=50 && hum<=80) s += 3; else if(hum>90) s -= 5;
+    /* 新增维度：昼夜温差 / 昨日骤变 / 日出日落窗口 / 月相 */
+    if(extras){
+      if(extras.tmax != null && extras.tmin != null){
+        const diff = extras.tmax - extras.tmin;
+        if(diff <= 6) s += 5; else if(diff <= 9) s += 1; else if(diff <= 12) s -= 6; else s -= 12;
+      }
+      if(extras.yesterdayMax != null && extras.tmax != null){
+        const jump = Math.abs(extras.tmax - extras.yesterdayMax);
+        if(jump >= 8) s -= 10;
+        else if(jump >= 5) s -= 4;
+        else s += 1;
+      }
+      if(extras.sunriseH != null && extras.sunsetH != null){
+        const now = new Date();
+        const hr = now.getHours() + now.getMinutes()/60;
+        if(hr >= extras.sunriseH - 0.5 && hr <= extras.sunriseH + 1.5) s += 6;
+        else if(hr >= extras.sunsetH - 2 && hr <= extras.sunsetH + 0.5) s += 6;
+        else if(hr >= 11 && hr <= 15) s -= 6;
+      }
+      if(extras.moonScore != null) s += extras.moonScore;
     }
     if(windKmh <= 8) s += 10; else if(windKmh <= 19) s += 5;
     else if(windKmh <= 29) s -= 10; else s -= 25;
