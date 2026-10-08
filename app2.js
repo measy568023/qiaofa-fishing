@@ -4,7 +4,7 @@
  * 模块：BaitMatch / BaitView / Calc / Tech / Search / UI / UpdateCheck / boot
  * ============================================================ */
 
-const APP_VERSION = '2.3.4';
+const APP_VERSION = '2.3.5';
 
 /* ============================================================
  * BaitMatch（配饵中心：经典配方 + 收藏到我的饵料）
@@ -44,86 +44,6 @@ const BaitMatch = (() => {
     box.querySelectorAll('[data-pick]').forEach(function(el){
       el.addEventListener('click', function(){ addOne(el.dataset.pick); });
     });
-  }
-  function comboAdvice(mainObjs, stateObjs, addObjs, nestObjs, wd, season){
-    const lines = [];
-    const mains = mainObjs.map(b => (b.flavor || '') + (b.note || '')).join('');
-    const allAdd = addObjs.map(b => (b.name || '') + (b.flavor || '')).join('');
-    const allState = stateObjs.map(b => (b.name || '') + (b.note || '')).join('');
-    const hasRou = /腥/.test(mains) || /红虫/.test(mains) || /虾/.test(mains);
-    const hasDan = /本味|香/.test(mains) && !/腥/.test(mains);
-    const hasGuo = /果酸/.test(allAdd);
-    const hasXia = /虾粉|磷虾/.test(allAdd);
-    const hasQian = /千里香/.test(allAdd);
-    const hasShui = /水母|膨胀|拉大球/.test(allState);
-    const hasQing = /轻麸|雪花|新四季|四季|尺上/.test(allState);
-    const hasLasi = /拉丝|拉大球/.test(allState);
-    const hasNian = /粘粉|麻团/.test(allState);
-
-    if(!wd || typeof wd.temp !== 'number'){
-      lines.push('🌦️ 暂无实时天气数据，无法做天气适配分析，请先刷新天气再生成方案');
-      return lines;
-    }
-    const t = wd.temp;
-
-    /* 温度维度 */
-    if(t < 10){
-      lines.push('❄️ 温度 ' + Math.round(t) + '°C（严寒）：鱼活性极低，适合浓腥/红虫活饵。' + (hasRou ? '✅ 主攻饵偏腥，匹配' : '⚠️ 主攻饵偏淡，低温鱼不开口，建议换浓腥或挂红虫'));
-      if(!hasXia && !hasRou) lines.push('💡 建议添加剂补虾粉/千里香提腥');
-    } else if(t < 15){
-      lines.push('🌡️ 温度 ' + Math.round(t) + '°C（偏凉）：腥香 7:3。' + (hasRou ? '✅ 偏腥配置合适' : (hasDan ? '⚠️ 偏淡了，建议加腥或补虾粉' : '➖ 中性配置，可加虾粉提腥')));
-    } else if(t <= 28){
-      lines.push('🌤️ 温度 ' + Math.round(t) + '°C（适宜）：腥香均衡。' + (hasRou && hasDan ? '✅ 腥香兼备，匹配' : (hasRou ? '⚠️ 偏腥，正午杂鱼会闹，可备一款本味饵' : '✅ 本味配置合适')));
-    } else if(t <= 33){
-      lines.push('☀️ 温度 ' + Math.round(t) + '°C（偏热）：宜本味/谷物。' + (hasRou ? '⚠️ 你的饵偏腥，高温招杂鱼，建议换本味+少量果酸' : '✅ 清淡配置合适'));
-    } else {
-      lines.push('🔥 温度 ' + Math.round(t) + '°C（酷热）：钓桥底阴凉。' + (hasRou ? '⚠️ 偏腥在酷热天易招杂鱼，强烈建议本味+果酸' : '✅ 清淡配置合适'));
-    }
-
-    /* 湿度维度 */
-    if(wd.hum != null){
-      if(wd.hum > 85) lines.push('💧 湿度 ' + Math.round(wd.hum) + '%：高湿易返水。' + (hasNian ? '✅ 有粘粉/麻团可压返水' : '⚠️ 建议饵开干散、少开勤开，可备粘粉'));
-      else if(wd.hum < 45) lines.push('💨 湿度 ' + Math.round(wd.hum) + '%：干燥。' + (hasShui || hasQing ? '✅ 有状态粉控制状态' : '➖ 注意及时补窝补水'));
-    }
-
-    /* 气压维度 */
-    if(wd.press != null){
-      if(wd.press < 1000){
-        lines.push('💨 气压 ' + Math.round(wd.press) + 'hPa（低压）：鱼易上浮、开口差。' + (hasGuo ? '✅ 有果酸适配' : '⚠️ 建议加果酸开胃，并改钓半水/搜层'));
-      } else if(wd.press <= 1022){
-        lines.push('📈 气压 ' + Math.round(wd.press) + 'hPa（适宜）：鱼口活跃。' + (nestObjs.length ? '✅ 可大胆打窝守钓' : '➖ 建议配窝料留鱼更久'));
-      } else {
-        lines.push('📈 气压 ' + Math.round(wd.press) + 'hPa（高压）：鱼活跃度高，钓深水更稳');
-      }
-    }
-
-    /* 风力维度 */
-    if(wd.wind != null){
-      if(wd.wind < 8){
-        lines.push('🍃 静风：可轻铅灵敏钓底。' + (hasLasi || hasShui ? '✅ 拉饵/状态配置合适' : '➖ 可加状态饵做拉饵放大口'));
-      } else if(wd.wind < 20){
-        lines.push('🌬️ 轻风 ' + Math.round(wd.wind) + 'km/h：正常作钓。' + (hasNian ? '✅ 有粘粉可防风线摆动' : '➖ 风线摆动大可备粘粉/搓硬饵'));
-      } else if(wd.wind < 29){
-        lines.push('🌪️ 和风 ' + Math.round(wd.wind) + 'km/h：需搓硬饵减雾化。' + (hasNian ? '✅ 有粘粉/麻团合适' : '⚠️ 建议加粘粉或搓硬饵，并加重铅 10g 绷紧风线'));
-      } else {
-        lines.push('🌀 大风 ' + Math.round(wd.wind) + 'km/h：不建议出钓；若坚持需粗稍重铅+背风位+大跑铅守底，饵用粘麻团');
-      }
-    }
-
-    /* 降水维度 */
-    if(wd.precipProb != null){
-      if(wd.precipProb <= 10) lines.push('☀️ 降水概率低：可正常打窝，全天安排');
-      else if(wd.precipProb <= 40) lines.push('⛅ 少量降水：备好雨具，雨停后口好');
-      else if(wd.precipProb <= 70) lines.push('🌧️ 降水概率 ' + wd.precipProb + '%：雨前腥饵口快。' + (hasRou ? '✅ 偏腥配置正好' : '⚠️ 可备一款腥饵迎接雨前窗口'));
-      else lines.push('⛈️ 高降水 ' + wd.precipProb + '%：雷雨禁钓，雨停 1-2 小时口最佳');
-    }
-
-    /* 综合结论 */
-    const issues = lines.filter(l => l.indexOf('⚠️') >= 0).length;
-    if(issues === 0) lines.push('🟢 综合：当前搭配与今天天气匹配度良好，按标注水比开饵即可');
-    else lines.push('🟡 综合：有 ' + issues + ' 项与今天天气不匹配，按上方 ⚠️ 建议调整后更稳');
-    lines.push('🟢 开饵流程：按各款标注水比加水，快搅静置 3-5 分钟后轻揉成团，1 小时内用完');
-    return lines;
   }
   function seasonOf(m){ return (DATA.monthSeason || {})[m] || '夏'; }
   function weatherAdvice(w){
@@ -199,8 +119,7 @@ const BaitMatch = (() => {
       '<button id="addBaitBtn">添加</button>' +
       '<button id="pickBaitBtn" style="background:#fff;color:#0369a1;border:1px solid #bae6fd;">📚 挑选</button></div>' +
       '<div class="pick-panel" id="pickPanel" hidden><input id="pickKw" placeholder="搜索饵料名称 / 品牌 / 味型…" autocomplete="off"><div id="pickList"></div></div>';
-    const comboHtml = '<div class="combo-advice"><b>💡 天气适配分析（这套饵今天适用吗）：</b><ul>' + comboAdvice(mainObjs, stateObjs, addObjs, nestObjs, wd, season).map(function(t){ return '<li>' + Utils.esc(t) + '</li>'; }).join('') + '</ul></div>';
-    box.innerHTML = comboHtml + addbarHtml +
+    box.innerHTML = addbarHtml +
       '<div style="margin-bottom:6px;display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap;">' +
         ((removedCnt || addedCnt) ? '<span style="font-size:.76rem;color:var(--muted);align-self:center;">已移除 ' + removedCnt + ' 款 / 已添加 ' + addedCnt + ' 款，可重置恢复</span>' : '') +
         '<button class="rel-link amber" id="matchReset" style="border:none;cursor:pointer;">↺ 重置方案</button>' +
@@ -214,7 +133,7 @@ const BaitMatch = (() => {
       '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">' +
         '<a href="#s0" class="rel-link" id="matchToCalc">⚖️ 用 ' + f.name + ' 计算钓组 →</a>' +
         '<a href="#s-tech" class="rel-link amber" id="matchToTech">📖 查看 ' + f.name + ' 手册 →</a>' +
-      '</div></div>' + comboHtml;
+      '</div></div>';
     const rs = Utils.$('matchReset');
     if(rs) rs.addEventListener('click', function(){ removed[fishId] = []; additions[fishId] = []; saveState(); render(); Toast.show('方案已重置', 'info'); });
     const ab = Utils.$('addBaitBtn');
@@ -558,25 +477,27 @@ function copyText(txt){
   }
 }
 function renderToday(){
-  const body = Utils.$('todayBody');
-  if(!body) return;
-  const f = FishContext.getFish();
-  if(!f){ body.innerHTML = '<span style="color:#d8f2f7;">请先选择目标鱼</span>'; return; }
-  const season = (DATA.monthSeason || {})[new Date().getMonth() + 1] || '夏';
-  const wd = (typeof Weather !== 'undefined' && Weather.getLastData) ? Weather.getLastData() : null;
-  const h = [];
-  h.push('<div class="td-item"><b>🎯 目标鱼</b>：' + f.name + ' · 最适水温 ' + f.tempPref.min + '~' + f.tempPref.max + '°C</div>');
-  h.push('<div class="td-item"><b>🎣 推荐钓组</b>：' + Utils.esc(f.rig.main) + ' / ' + Utils.esc(f.rig.sub) + ' · ' + Utils.esc(f.rig.hook) + '</div>');
-  h.push('<div class="td-item"><b>📋 经典配方</b>：' + Utils.esc(f.formula) + '</div>');
-  h.push('<div class="td-item"><b>🗓️ 本月要点（' + season + '季）</b>：' + Utils.esc(f.tips[season] || '') + '</div>');
-  if(wd && typeof wd.temp === 'number'){
-    if(wd.temp < 10) h.push('<div class="td-item"><b>🌡️ 今日用饵</b>：低温，浓腥/红虫为主，加虾粉千里香</div>');
-    else if(wd.temp <= 28) h.push('<div class="td-item"><b>🌡️ 今日用饵</b>：温度适宜，按经典配方开饵即可</div>');
-    else h.push('<div class="td-item"><b>🌡️ 今日用饵</b>：偏热，本味/谷物+少量果酸，避杂鱼</div>');
-    if(wd.moon) h.push('<div class="td-item"><b>🌙 月相</b>：' + wd.moon + (wd.sunrise ? ' · 日出 ' + wd.sunrise + ' / 日落 ' + wd.sunset : '') + '</div>');
-  }
-  h.push('<div class="td-actions"><a href="#s0" class="rel-link">🧮 详细计算</a><a href="#s-bait" class="rel-link">🎣 配饵中心</a><a href="#s-tech" class="rel-link">📖 作战手册</a></div>');
-  body.innerHTML = h.join('');
+  try{
+    const body = Utils.$('todayBody');
+    if(!body) return;
+    const f = FishContext.getFish();
+    if(!f){ body.innerHTML = '<span style="color:#d8f2f7;">请先选择目标鱼</span>'; return; }
+    const season = (DATA.monthSeason || {})[new Date().getMonth() + 1] || '夏';
+    const wd = (typeof Weather !== 'undefined' && Weather.getLastData) ? Weather.getLastData() : null;
+    const h = [];
+    h.push('<div class="td-item"><b>🎯 目标鱼</b>：' + f.name + ' · 最适水温 ' + f.tempPref.min + '~' + f.tempPref.max + '°C</div>');
+    h.push('<div class="td-item"><b>🎣 推荐钓组</b>：' + Utils.esc(f.rig.main) + ' / ' + Utils.esc(f.rig.sub) + ' · ' + Utils.esc(f.rig.hook) + '</div>');
+    h.push('<div class="td-item"><b>📋 经典配方</b>：' + Utils.esc(f.formula) + '</div>');
+    h.push('<div class="td-item"><b>🗓️ 本月要点（' + season + '季）</b>：' + Utils.esc(f.tips[season] || '') + '</div>');
+    if(wd && typeof wd.temp === 'number'){
+      if(wd.temp < 10) h.push('<div class="td-item"><b>🌡️ 今日用饵</b>：低温，浓腥/红虫为主，加虾粉千里香</div>');
+      else if(wd.temp <= 28) h.push('<div class="td-item"><b>🌡️ 今日用饵</b>：温度适宜，按经典配方开饵即可</div>');
+      else h.push('<div class="td-item"><b>🌡️ 今日用饵</b>：偏热，本味/谷物+少量果酸，避杂鱼</div>');
+      if(wd.moon) h.push('<div class="td-item"><b>🌙 月相</b>：' + wd.moon + (wd.sunrise ? ' · 日出 ' + wd.sunrise + ' / 日落 ' + wd.sunset : '') + '</div>');
+    }
+    h.push('<div class="td-actions"><a href="#s0" class="rel-link">🧮 详细计算</a><a href="#s-bait" class="rel-link">🎣 配饵中心</a><a href="#s-tech" class="rel-link">📖 作战手册</a></div>');
+    body.innerHTML = h.join('');
+  }catch(e){ console.warn('[今日速览]', e); }
 }
 const LogBook = (() => {
   const KEY = 'qiaofa_log_v1';
@@ -1046,6 +967,8 @@ const Collapse = (() => {
   /* 天气优先加载（避免被其他模块初始化阻塞） */
   Weather.bind();
   Weather.init();
+  renderToday();
+  FishContext.onChange(renderToday);
   BaitView.bind();
   BaitMatch.bind();
   Calc.bind();
@@ -1054,8 +977,6 @@ const Collapse = (() => {
   UI.bind();
   Collapse.init();
   LogBook.bind();
-  renderToday();
-  FishContext.onChange(renderToday);
   /* PWA：注册 Service Worker */
   if('serviceWorker' in navigator && location.protocol !== 'file:' && window.isSecureContext){
     window.addEventListener('load', function(){
