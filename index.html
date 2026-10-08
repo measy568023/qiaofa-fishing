@@ -411,6 +411,16 @@ tailwind.config = {
   .pick-tab{background:#f0f9ff;border:1px solid #bae6fd;border-radius:999px;padding:6px 12px;min-height:36px;cursor:pointer;font-size:.8rem;color:#0369a1;font-weight:600;}
   html.dark .pick-tab{background:#0c2a3e;border-color:#0369a1;color:#7dd3fc;}
   .pick-tab[data-on]{background:#0369a1;color:#fff;border-color:#0369a1;}
+  /* 钓况统计 */
+  .log-stats{background:#f0f9ff;border:1px solid #bae6fd;border-left:4px solid #0ea5e9;border-radius:10px;padding:10px 14px;margin-bottom:10px;font-size:.85rem;line-height:1.9;}
+  html.dark .log-stats{background:#0c2a3e;border-color:#0369a1;}
+  .ls-grid{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;}
+  .ls-item{background:#fff;border-radius:8px;padding:6px 14px;text-align:center;min-width:84px;font-size:.72rem;color:var(--muted);}
+  html.dark .ls-item{background:#0f172a;}
+  .ls-item b{font-size:1.15rem;color:#0369a1;}
+  html.dark .ls-item b{color:#38bdf8;}
+  .ls-line b{color:#0369a1;}
+  html.dark .ls-line b{color:#38bdf8;}
   .pick-panel{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:12px;max-height:280px;overflow-y:auto;}
   html.dark .pick-panel{background:#0f172a;border-color:#334155;}
   .pick-panel input{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 10px;font-size:15px;outline:none;margin-bottom:8px;min-height:44px;}
@@ -675,6 +685,7 @@ tailwind.config = {
     <div class="tech-filter">
       <span>🎯 目标鱼：</span>
       <select id="techFish"></select>
+      <button id="techClear" style="background:#fff;border:1px solid var(--line);border-radius:8px;color:var(--danger);padding:8px 12px;min-height:42px;cursor:pointer;font-size:.8rem;">✕ 清除筛选</button>
       <span style="font-size:.8rem;color:var(--muted);">选鱼后自动聚焦该鱼适用的内容</span>
     </div>
     <div class="tech-nav" id="techNav">
@@ -759,10 +770,10 @@ tailwind.config = {
  * 单独维护此文件并上传覆盖，即可全站更新数据（页面自动检测新版本）。
  * 字段说明见各区块注释。本文件仅包含数据，不含业务逻辑。
  * ============================================================ */
-window.QIAOFA_DATA_VERSION = '2.4.0';
+window.QIAOFA_DATA_VERSION = '2.4.1';
 
 window.QIAOFA_DATA = {
-  version: '2.4.0',
+  version: '2.4.1',
   updatedAt: '2026-09-23',
 
   /* 月份 → 季节映射（计算器按月份联动季节） */
@@ -1349,7 +1360,7 @@ window.QIAOFA_DATA = {
     { brand:'通用', name:'果酸 / 六合香 / 蛋奶', cat:'添加剂', flavor:'果酸/浓香/奶香', target:['鲫鱼','鲤鱼'], seasons:['夏'], scene:'黑坑/野钓', waterRatio:'开饵按 1-3% 添加', note:'夏季开口差时少量添加' },
     { brand:'通用', name:'菜籽饼 / 豆饼', cat:'窝料', flavor:'本味油香', target:['鲤鱼','草鱼','青鱼','鲢鳙'], seasons:['春','夏','秋'], scene:'打窝', waterRatio:'直接打窝，或泡水后拌泥', note:'经济实惠的底窝料' },
     { brand:'通用', name:'中药酒（阿魏等）', cat:'添加剂', flavor:'药酒香', target:['鲫鱼','鲤鱼'], seasons:['春','秋','冬'], scene:'泡米/开饵', waterRatio:'泡制酒米打窝，或开饵按 1-2% 添加', note:'泡制酒米打窝' },
-    { brand:'通用', name:'嫩玉米（鲜玉米粒）', cat:'玉米麦粒', flavor:'本味', target:['草鱼','鲤鱼','青鱼','翘嘴'], seasons:['夏','秋'], scene:'野钓守大物', waterRatio:'现剥挂钩，无需开饵', note:'现剥玉米挂钩，天然饵' },
+    { brand:'通用', name:'嫩玉米（鲜玉米粒）', cat:'玉米麦粒', flavor:'本味', target:['草鱼','鲤鱼','青鱼','翘嘴'], seasons:['夏','秋'], scene:'野钓守大物', waterRatio:'现剥挂钩，无需开饵', note:'现剥玉米挂钩，天然饵；打窝可切碎混合谷物，也可蜂蜜曲酒泡一夜增甜香' },
     { brand:'通用', name:'麦粒（谷麦）', cat:'玉米麦粒', flavor:'本味麦香', target:['鲤鱼','草鱼','鲫鱼','鳊鱼'], seasons:['春','夏','秋'], scene:'野钓', waterRatio:'开袋即用，挂钩即可', note:'避小杂鱼，谷麦钓法' },
     /* ---------- 大师常用饵（抖音头部主播配方组分，2026 入库） ---------- */
     { brand:'天元', name:'巨能', cat:'粉饵', flavor:'大腥大香', target:['鲫鱼'], seasons:['春','夏','秋'], scene:'野钓', waterRatio:'饵水 1:0.9', note:'邓刚常用，主攻中小型鲫鱼，可与红魔1号搭配调腥香比' },
@@ -1659,13 +1670,40 @@ const Weather = (() => {
     const pref = FishContext.getFish() ? FishContext.getFish().tempPref : null;
     let s = 60;
     if(pref && isFinite(pref.min) && isFinite(pref.max)){
-      if(t >= pref.min && t <= pref.max) s += 20;
-      else if(t >= pref.min - 5 && t <= pref.max + 5) s += 8;
+      if(t >= pref.min && t <= pref.max) s += 12;
+      else if(t >= pref.min - 5 && t <= pref.max + 5) s += 4;
       else if(t < pref.min - 10 || t > pref.max + 10) s -= 20;
       else s -= 8;
     } else {
-      if(t>=15 && t<=28) s += 20; else if(t>=8 && t<15) s += 10;
-      else if(t>28 && t<=33) s += 5; else if(t<0 || t>35) s -= 20; else if(t<5) s -= 10;
+      if(t>=15 && t<=28) s += 12; else if(t>=8 && t<15) s += 6;
+      else if(t>28 && t<=33) s += 3; else if(t<0 || t>35) s -= 20; else if(t<5) s -= 10;
+    }
+    if(windKmh <= 8) s += 6; else if(windKmh <= 19) s += 3;
+    else if(windKmh <= 29) s -= 10; else s -= 25;
+    if(precipProb <= 10) s += 6; else if(precipProb <= 40) s += 0;
+    else if(precipProb <= 70) s -= 10; else s -= 20;
+    if(press>=1002 && press<=1022) s += 6; else if(press<995 || press>1030) s -= 10;
+    if(hum>=50 && hum<=80) s += 3; else if(hum>90) s -= 5;
+    /* 新增维度：昼夜温差 / 昨日骤变 / 日出日落窗口 / 月相 */
+    if(extras){
+      if(extras.tmax != null && extras.tmin != null){
+        const diff = extras.tmax - extras.tmin;
+        if(diff <= 6) s += 5; else if(diff <= 9) s += 1; else if(diff <= 12) s -= 6; else s -= 12;
+      }
+      if(extras.yesterdayMax != null && extras.tmax != null){
+        const jump = Math.abs(extras.tmax - extras.yesterdayMax);
+        if(jump >= 8) s -= 10;
+        else if(jump >= 5) s -= 4;
+        else s += 1;
+      }
+      if(extras.sunriseH != null && extras.sunsetH != null){
+        const now = new Date();
+        const hr = now.getHours() + now.getMinutes()/60;
+        if(hr >= extras.sunriseH - 0.5 && hr <= extras.sunriseH + 1.5) s += 6;
+        else if(hr >= extras.sunsetH - 2 && hr <= extras.sunsetH + 0.5) s += 6;
+        else if(hr >= 11 && hr <= 15) s -= 6;
+      }
+      if(extras.moonScore != null) s += extras.moonScore;
     }
     if(windKmh <= 8) s += 10; else if(windKmh <= 19) s += 5;
     else if(windKmh <= 29) s -= 10; else s -= 25;
@@ -2188,7 +2226,7 @@ const Weather = (() => {
  * 模块：BaitMatch / BaitView / Calc / Tech / Search / UI / UpdateCheck / boot
  * ============================================================ */
 
-const APP_VERSION = '2.4.0';
+const APP_VERSION = '2.4.1';
 
 /* ============================================================
  * BaitMatch（配饵中心：经典配方 + 收藏到我的饵料）
@@ -2615,7 +2653,7 @@ const Calc = (() => {
     Utils.$('calcResultTitle').textContent = '推荐钓组方案 · ' + f.name + '（' + inp.month + '月 · ' + season + '季）';
     Utils.$('resTip').textContent = tipNote;
     Utils.$('resLeadRange').textContent = range;
-    Utils.$('resLead').textContent = lead + ' g';
+    Utils.$('resLead').textContent = lead + ' g' + (lead > 6 ? '（轻口可减 2g）' : '');
     Utils.$('resLeadMatch').innerHTML = matchNote;
     Utils.$('resLine').textContent = f.rig.main + ' / ' + f.rig.sub;
     Utils.$('resHook').textContent = f.rig.hook;
@@ -2729,11 +2767,41 @@ const LogBook = (() => {
   let list = Store.get(KEY, []);
   function save(){ Store.set(KEY, list); }
   function todayStr(){ const d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  function statsHtml(){
+    if(!list.length) return '';
+    const bySpot = {}, byFish = {}, byTime = {};
+    let totalCatch = 0, openDays = 0;
+    list.forEach(function(r){
+      const c = r.count || 0;
+      totalCatch += c;
+      if(c > 0) openDays++;
+      if(r.spot){ bySpot[r.spot] = (bySpot[r.spot] || 0) + c; }
+      if(r.fish){ byFish[r.fish] = (byFish[r.fish] || 0) + c; }
+      if(r.time){ byTime[r.time] = (byTime[r.time] || 0) + c; }
+    });
+    const top = function(obj, n){
+      return Object.keys(obj).map(function(k){ return { k: k, v: obj[k] }; })
+        .sort(function(a, b){ return b.v - a.v; }).slice(0, n);
+    };
+    const sTop = top(bySpot, 3), fTop = top(byFish, 3), tTop = top(byTime, 3);
+    let h = [];
+    h.push('<div class="log-stats">');
+    h.push('<div class="ls-grid">');
+    h.push('<div class="ls-item"><b>' + list.length + '</b>次出钓</div>');
+    h.push('<div class="ls-item"><b>' + totalCatch + '</b>条渔获</div>');
+    h.push('<div class="ls-item"><b>' + Math.round(openDays / list.length * 100) + '%</b>开口率</div>');
+    h.push('</div>');
+    if(sTop.length) h.push('<div class="ls-line">🏆 最出鱼钓位：' + sTop.map(function(x){ return '<b>' + x.k + '</b>（' + x.v + '条）'; }).join('、') + '</div>');
+    if(fTop.length) h.push('<div class="ls-line">🐟 最出鱼鱼种：' + fTop.map(function(x){ return '<b>' + x.k + '</b>（' + x.v + '条）'; }).join('、') + '</div>');
+    if(tTop.length) h.push('<div class="ls-line">⏰ 最佳时段：' + tTop.map(function(x){ return '<b>' + x.k + '</b>（' + x.v + '条）'; }).join('、') + '</div>');
+    h.push('</div>');
+    return h.join('');
+  }
   function render(){
     const box = Utils.$('logList');
     if(!box) return;
     if(!list.length){ box.innerHTML = '<div class="mb-empty">还没有记录，钓完记一笔，越攒越准</div>'; return; }
-    box.innerHTML = list.slice().reverse().map(function(r, i){
+    box.innerHTML = statsHtml() + list.slice().reverse().map(function(r, i){
       const idx = list.length - 1 - i;
       return '<div class="mybait"><b>' + Utils.esc(r.date || '') + ' · ' + Utils.esc(r.spot || '—') + '</b>' +
         '<span>' + Utils.esc(r.time || '') + '</span>' +
@@ -3161,6 +3229,12 @@ const Collapse = (() => {
     techFish.innerHTML = '<option value="">全部鱼种</option>' + fishOpts;
     techFish.addEventListener('change', e => {
       Tech.render(e.target.value || null);
+    });
+    const tc = Utils.$('techClear');
+    if(tc) tc.addEventListener('click', function(){
+      techFish.value = '';
+      Tech.render(null);
+      Toast.show('已清除鱼种筛选，显示全部内容', 'info');
     });
   }
   /* 计算器参数记忆恢复 */
