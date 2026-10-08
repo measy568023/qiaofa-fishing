@@ -3,10 +3,10 @@
  * 单独维护此文件并上传覆盖，即可全站更新数据（页面自动检测新版本）。
  * 字段说明见各区块注释。本文件仅包含数据，不含业务逻辑。
  * ============================================================ */
-window.QIAOFA_DATA_VERSION = '2.4.0';
+window.QIAOFA_DATA_VERSION = '2.4.1';
 
 window.QIAOFA_DATA = {
-  version: '2.4.0',
+  version: '2.4.1',
   updatedAt: '2026-09-23',
 
   /* 月份 → 季节映射（计算器按月份联动季节） */
@@ -593,7 +593,7 @@ window.QIAOFA_DATA = {
     { brand:'通用', name:'果酸 / 六合香 / 蛋奶', cat:'添加剂', flavor:'果酸/浓香/奶香', target:['鲫鱼','鲤鱼'], seasons:['夏'], scene:'黑坑/野钓', waterRatio:'开饵按 1-3% 添加', note:'夏季开口差时少量添加' },
     { brand:'通用', name:'菜籽饼 / 豆饼', cat:'窝料', flavor:'本味油香', target:['鲤鱼','草鱼','青鱼','鲢鳙'], seasons:['春','夏','秋'], scene:'打窝', waterRatio:'直接打窝，或泡水后拌泥', note:'经济实惠的底窝料' },
     { brand:'通用', name:'中药酒（阿魏等）', cat:'添加剂', flavor:'药酒香', target:['鲫鱼','鲤鱼'], seasons:['春','秋','冬'], scene:'泡米/开饵', waterRatio:'泡制酒米打窝，或开饵按 1-2% 添加', note:'泡制酒米打窝' },
-    { brand:'通用', name:'嫩玉米（鲜玉米粒）', cat:'玉米麦粒', flavor:'本味', target:['草鱼','鲤鱼','青鱼','翘嘴'], seasons:['夏','秋'], scene:'野钓守大物', waterRatio:'现剥挂钩，无需开饵', note:'现剥玉米挂钩，天然饵' },
+    { brand:'通用', name:'嫩玉米（鲜玉米粒）', cat:'玉米麦粒', flavor:'本味', target:['草鱼','鲤鱼','青鱼','翘嘴'], seasons:['夏','秋'], scene:'野钓守大物', waterRatio:'现剥挂钩，无需开饵', note:'现剥玉米挂钩，天然饵；打窝可切碎混合谷物，也可蜂蜜曲酒泡一夜增甜香' },
     { brand:'通用', name:'麦粒（谷麦）', cat:'玉米麦粒', flavor:'本味麦香', target:['鲤鱼','草鱼','鲫鱼','鳊鱼'], seasons:['春','夏','秋'], scene:'野钓', waterRatio:'开袋即用，挂钩即可', note:'避小杂鱼，谷麦钓法' },
     /* ---------- 大师常用饵（抖音头部主播配方组分，2026 入库） ---------- */
     { brand:'天元', name:'巨能', cat:'粉饵', flavor:'大腥大香', target:['鲫鱼'], seasons:['春','夏','秋'], scene:'野钓', waterRatio:'饵水 1:0.9', note:'邓刚常用，主攻中小型鲫鱼，可与红魔1号搭配调腥香比' },
