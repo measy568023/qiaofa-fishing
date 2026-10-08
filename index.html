@@ -392,7 +392,25 @@ tailwind.config = {
   .td-actions{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;}
   .today-body .rel-link{background:#fff;color:#0369a1;border-color:transparent;}
   html.dark .today-body .rel-link{background:#0f172a;color:#7dd3fc;}
-  /* 饵料挑选面板 */
+  /* 配饵原理卡 + 饵料分类 Tab */
+  .principle-card{background:#eef7f1;border:1px solid #cde8d9;border-left:5px solid #3e8f6a;border-radius:12px;padding:14px 16px;margin-bottom:14px;font-size:.88rem;line-height:1.8;}
+  html.dark .principle-card{background:#16213a;border-color:#334155;}
+  .principle-card h4{color:#0b4250;font-weight:800;margin-bottom:6px;}
+  html.dark .principle-card h4{color:#e2e8f0;}
+  .pf-formula{background:#fff;border:1px dashed #3e8f6a;border-radius:8px;padding:8px 12px;font-weight:700;color:#1c4a3a;margin-bottom:8px;}
+  html.dark .pf-formula{background:#0f172a;color:#6ee7b7;border-color:#3e8f6a;}
+  .principle-card ul{margin-left:18px;}
+  .principle-card li{margin-bottom:3px;}
+  .bait-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+  .bait-tab{background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 14px;min-height:40px;cursor:pointer;font-size:.85rem;color:var(--muted);font-weight:600;}
+  html.dark .bait-tab{background:#0f172a;border-color:#334155;color:#94a3b8;}
+  .bait-tab[data-on]{background:var(--brand);border-color:var(--brand);color:#fff;}
+  .bait-tab em{font-style:normal;font-size:.72rem;opacity:.7;margin-left:3px;}
+  .bait-item .bi-top .tag.green{margin-right:4px;}
+  .pick-tabs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;}
+  .pick-tab{background:#f0f9ff;border:1px solid #bae6fd;border-radius:999px;padding:6px 12px;min-height:36px;cursor:pointer;font-size:.8rem;color:#0369a1;font-weight:600;}
+  html.dark .pick-tab{background:#0c2a3e;border-color:#0369a1;color:#7dd3fc;}
+  .pick-tab[data-on]{background:#0369a1;color:#fff;border-color:#0369a1;}
   .pick-panel{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:12px;max-height:280px;overflow-y:auto;}
   html.dark .pick-panel{background:#0f172a;border-color:#334155;}
   .pick-panel input{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 10px;font-size:15px;outline:none;margin-bottom:8px;min-height:44px;}
@@ -603,6 +621,16 @@ tailwind.config = {
   <section id="s-bait" data-static="1">
     <div class="sec-head"><div class="num">🎣</div><h2>饵料库 · 配饵中心</h2><span class="static-badge">离线可阅</span></div>
     <div class="card">
+      <div class="principle-card">
+        <h4>🧭 配饵原理速览</h4>
+        <div class="pf-formula">基础饵 40-60% + 主攻饵 30-40% + 状态饵 10-20% + 添加剂适量</div>
+        <ul>
+          <li>🌡️ 季节味型：春腥 · 夏淡 · 秋香 · 冬浓（低温加腥、高温清淡避杂鱼）</li>
+          <li>💧 状态调整：拉饵加拉丝粉；搓饵控水比；散炮减水、加重颗粒增比重</li>
+          <li>🎯 窝饵同味：窝里吃的钩上也有，留鱼更稳</li>
+          <li>⚠️ 添加剂宁少勿多：味型太杂或过量易死窝</li>
+        </ul>
+      </div>
       <div class="calc-form">
         <div>
           <label>目标鱼种</label>
@@ -626,22 +654,11 @@ tailwind.config = {
       </div>
       <div id="matchResult"></div>
 
-      <h3 class="sub">📚 饵料库参考（市面主流 · 含开饵水比）</h3>
-      <div class="classic-card">
-        <h4>⭐ 经典配方速查（按鱼种）</h4>
-        <ul>
-          <li><b>鲫鱼</b>：老三样 蓝鲫40%+九一八40%+速攻20%（搓饵1:0.8/拉饵1:1）；冬季 蓝鲫60%+九一八20%+速攻20%；小慧组合 4号鲫+不空军腥香版+钢弹2号（1:1）；邓刚小鲫 巨能70%+红魔1号30%</li>
-          <li><b>鲤鱼 / 草鱼 / 青鱼</b>：螺鲤老三样 螺鲤（先泡水）1+九一八 1+速攻 0.5；守大物挂老坛玉米</li>
-          <li><b>鲢鳙</b>：金版浮钓鲢鳙 单开（饵水1:0.8 捏散炮），高温雾化抽窝，钓 1-2 米水层</li>
-          <li><b>翘嘴 / 红梢</b>：嫩玉米挂钩 + 缓降/点搜逗钓；或 918+虾粉 拉饵搜层</li>
-          <li><b>黄颡 / 鲶鱼</b>：蚯蚓/鸡肝直挂，内脏拌泥打窝，夜钓守底</li>
-          <li><b>罗非</b>：大福寿+冷冻饵 1:1；黑坑用散炮黄面面抢鱼</li>
-        </ul>
-      </div>
+      <h3 class="sub">📚 饵料库 · 完整分类（市面主流 · 含开饵水比）</h3>
+      <div class="bait-tabs" id="baitTabs"></div>
       <div class="bait-filter">
         <select id="baitFish"><option value="">全部鱼种</option></select>
         <select id="baitBrand"><option value="">全部品牌</option></select>
-        <select id="baitCat"><option value="">全部类别</option></select>
         <input id="baitKw" placeholder="搜索名称 / 味型 / 备注…" autocomplete="off">
         <div class="bait-count" id="baitCount"></div>
       </div>
@@ -742,10 +759,10 @@ tailwind.config = {
  * 单独维护此文件并上传覆盖，即可全站更新数据（页面自动检测新版本）。
  * 字段说明见各区块注释。本文件仅包含数据，不含业务逻辑。
  * ============================================================ */
-window.QIAOFA_DATA_VERSION = '2.3.5';
+window.QIAOFA_DATA_VERSION = '2.4.0';
 
 window.QIAOFA_DATA = {
-  version: '2.3.5',
+  version: '2.4.0',
   updatedAt: '2026-09-23',
 
   /* 月份 → 季节映射（计算器按月份联动季节） */
@@ -2171,7 +2188,7 @@ const Weather = (() => {
  * 模块：BaitMatch / BaitView / Calc / Tech / Search / UI / UpdateCheck / boot
  * ============================================================ */
 
-const APP_VERSION = '2.3.5';
+const APP_VERSION = '2.4.0';
 
 /* ============================================================
  * BaitMatch（配饵中心：经典配方 + 收藏到我的饵料）
@@ -2199,14 +2216,30 @@ const BaitMatch = (() => {
     Toast.show('已添加：' + b.name + '（' + c + '）', 'info');
     return true;
   }
+  let pickTab = '全部';
+  const PICK_TABS = ['全部','主攻饵','状态饵','添加剂','窝料','天然饵','活饵'];
   function renderPick(kw){
     const box = Utils.$('pickList');
     if(!box) return;
     const k = (kw || '').toLowerCase();
-    const items = (DATA.baits || []).filter(function(b){ return !k || (b.brand + b.name + b.flavor + (b.cat || '') + (b.note || '')).toLowerCase().indexOf(k) >= 0; }).slice(0, 15);
+    const tabBox = Utils.$('pickTabs');
+    if(tabBox){
+      tabBox.innerHTML = PICK_TABS.map(function(t){ return '<button class="pick-tab" data-pt="' + t + '"' + (pickTab === t ? ' data-on="1"' : '') + '>' + t + '</button>'; }).join('');
+      tabBox.querySelectorAll('.pick-tab').forEach(function(el){
+        el.addEventListener('click', function(){
+          pickTab = el.dataset.pt;
+          renderPick(Utils.$('pickKw') ? Utils.$('pickKw').value.trim() : '');
+        });
+      });
+    }
+    const bigC = (typeof BaitView !== 'undefined' && BaitView.bigCat) ? BaitView.bigCat : function(c){ return c; };
+    const items = (DATA.baits || []).filter(function(b){
+      if(pickTab !== '全部' && bigC(b.cat) !== pickTab) return false;
+      return !k || (b.brand + b.name + b.flavor + (b.cat || '') + (b.note || '')).toLowerCase().indexOf(k) >= 0;
+    }).slice(0, 15);
     if(!items.length){ box.innerHTML = '<div class="mb-empty">无匹配饵料，可尝试其他关键词</div>'; return; }
     box.innerHTML = items.map(function(b){
-      return '<div class="pick-item" data-pick="' + Utils.esc(b.name) + '"><b>' + Utils.esc(b.name) + '</b><span class="p-meta">' + Utils.esc(b.brand) + ' · ' + Utils.esc(b.cat) + ' · ' + Utils.esc(b.flavor) + '</span></div>';
+      return '<div class="pick-item" data-pick="' + Utils.esc(b.name) + '"><b>' + Utils.esc(b.name) + '</b><span class="p-meta">' + Utils.esc(b.brand) + ' · ' + bigC(b.cat) + ' · ' + Utils.esc(b.flavor) + '</span></div>';
     }).join('');
     box.querySelectorAll('[data-pick]').forEach(function(el){
       el.addEventListener('click', function(){ addOne(el.dataset.pick); });
@@ -2285,7 +2318,10 @@ const BaitMatch = (() => {
       '<select id="addBaitCat"><option value="main">主攻饵</option><option value="state">状态饵</option><option value="add">添加剂</option><option value="nest">窝料</option></select>' +
       '<button id="addBaitBtn">添加</button>' +
       '<button id="pickBaitBtn" style="background:#fff;color:#0369a1;border:1px solid #bae6fd;">📚 挑选</button></div>' +
-      '<div class="pick-panel" id="pickPanel" hidden><input id="pickKw" placeholder="搜索饵料名称 / 品牌 / 味型…" autocomplete="off"><div id="pickList"></div></div>';
+      '<div class="pick-panel" id="pickPanel" hidden>' +
+        '<div class="pick-tabs" id="pickTabs"></div>' +
+        '<input id="pickKw" placeholder="搜索饵料名称 / 品牌 / 味型…" autocomplete="off">' +
+        '<div id="pickList"></div></div>';
     box.innerHTML = addbarHtml +
       '<div style="margin-bottom:6px;display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap;">' +
         ((removedCnt || addedCnt) ? '<span style="font-size:.76rem;color:var(--muted);align-self:center;">已移除 ' + removedCnt + ' 款 / 已添加 ' + addedCnt + ' 款，可重置恢复</span>' : '') +
@@ -2366,28 +2402,46 @@ const BaitMatch = (() => {
  * ============================================================ */
 const BaitView = (() => {
   const PAGE = 18;
+  const TABS = ['全部','主攻饵','基础饵','状态饵','添加剂','窝料','天然饵','活饵','散炮'];
   let page = 1;
-  let state = { fish:'', brand:'', cat:'', kw:'' };
+  let state = { tab:'全部', fish:'', brand:'', kw:'' };
+  function bigCat(cat){
+    if(cat === '状态饵') return '状态饵';
+    if(cat === '添加剂') return '添加剂';
+    if(cat === '窝料') return '窝料';
+    if(cat === '基础饵') return '基础饵';
+    if(cat === '散炮') return '散炮';
+    if(cat === '活饵') return '活饵';
+    if(cat === '玉米麦粒') return '天然饵';
+    return '主攻饵';
+  }
+  function tabCount(tab){
+    return (DATA.baits || []).filter(b => tab === '全部' || bigCat(b.cat) === tab).length;
+  }
   function allTargets(){
     const set = new Set();
     (DATA.baits || []).forEach(b => (b.target || []).forEach(t => set.add(t)));
     return Array.from(set).sort();
   }
   function allBrands(){ return Array.from(new Set((DATA.baits || []).map(b => b.brand))).sort(); }
-  function allCats(){ return Array.from(new Set((DATA.baits || []).map(b => b.cat))).sort(); }
   function fillFilters(){
-    const fishSel = Utils.$('baitFish'), brandSel = Utils.$('baitBrand'), catSel = Utils.$('baitCat');
-    if(!fishSel || !brandSel || !catSel) return;
-    fishSel.innerHTML = '<option value="">全部鱼种</option>' + allTargets().map(t => '<option value="' + Utils.esc(t) + '">' + Utils.esc(t) + '</option>').join('');
-    brandSel.innerHTML = '<option value="">全部品牌</option>' + allBrands().map(b => '<option value="' + Utils.esc(b) + '">' + Utils.esc(b) + '</option>').join('');
-    catSel.innerHTML = '<option value="">全部类别</option>' + allCats().map(c => '<option value="' + Utils.esc(c) + '">' + Utils.esc(c) + '</option>').join('');
+    const fishSel = Utils.$('baitFish'), brandSel = Utils.$('baitBrand');
+    if(fishSel) fishSel.innerHTML = '<option value="">全部鱼种</option>' + allTargets().map(t => '<option value="' + Utils.esc(t) + '">' + Utils.esc(t) + '</option>').join('');
+    if(brandSel) brandSel.innerHTML = '<option value="">全部品牌</option>' + allBrands().map(b => '<option value="' + Utils.esc(b) + '">' + Utils.esc(b) + '</option>').join('');
+    const tabBox = Utils.$('baitTabs');
+    if(tabBox){
+      tabBox.innerHTML = TABS.map(t => '<button class="bait-tab" data-tab="' + t + '"' + (state.tab === t ? ' data-on="1"' : '') + '>' + t + '<em>' + tabCount(t) + '</em></button>').join('');
+      tabBox.querySelectorAll('.bait-tab').forEach(function(btn){
+        btn.addEventListener('click', function(){ state.tab = btn.dataset.tab; page = 1; fillFilters(); render(); });
+      });
+    }
   }
   function filtered(){
     const kw = state.kw.toLowerCase();
     return (DATA.baits || []).filter(b => {
+      if(state.tab !== '全部' && bigCat(b.cat) !== state.tab) return false;
       if(state.fish && !(b.target || []).includes(state.fish)) return false;
       if(state.brand && b.brand !== state.brand) return false;
-      if(state.cat && b.cat !== state.cat) return false;
       if(kw){
         const hay = (b.brand + b.name + b.flavor + b.note + (b.target || []).join('')).toLowerCase();
         if(hay.indexOf(kw) < 0) return false;
@@ -2404,15 +2458,18 @@ const BaitView = (() => {
     const slice = list.slice((page - 1) * PAGE, page * PAGE);
     const box = Utils.$('baitList');
     if(!box) return;
-    Utils.$('baitCount').textContent = '共 ' + total + ' 款饵料' + (state.kw ? '（搜索：' + state.kw + '）' : '');
+    Utils.$('baitCount').textContent = '共 ' + total + ' 款饵料' + (state.tab !== '全部' ? '（' + state.tab + '）' : '') + (state.kw ? ' · 搜索：' + state.kw : '');
     if(!slice.length){
       box.innerHTML = '<div class="bait-empty">没有符合条件的饵料，换个关键词试试</div>';
     } else {
       box.innerHTML = slice.map(b => {
         const targets = (b.target || []).map(t => '<span class="tag">' + Utils.esc(t) + '</span>').join('');
         const seasons = (b.seasons || []).map(s => '<span class="tag gold">' + s + '</span>').join('');
+        const bc = bigCat(b.cat);
         return '<div class="bait-item">' +
-          '<div class="bi-top"><b>' + Utils.esc(b.name) + '</b><span class="bi-cat">' + Utils.esc(b.brand) + ' · ' + Utils.esc(b.cat) + '</span></div>' +
+          '<div class="bi-top"><b>' + Utils.esc(b.name) + '</b>' +
+            '<span class="tag green">' + bc + '</span>' +
+            '<span class="bi-cat">' + Utils.esc(b.brand) + ' · ' + Utils.esc(b.cat) + '</span></div>' +
           (b.waterRatio ? '<div class="bi-water">💧 水比 / 用法：' + Utils.esc(b.waterRatio) + '</div>' : '') +
           '<div class="bi-tags">' + targets + seasons + '</div>' +
           '<div class="bi-note">' + Utils.esc(b.flavor) + ' · ' + Utils.esc(b.note) + '</div>' +
@@ -2429,13 +2486,14 @@ const BaitView = (() => {
   }
   function bind(){
     fillFilters();
-    Utils.$('baitFish').addEventListener('change', e => { state.fish = e.target.value; page = 1; render(); });
-    Utils.$('baitBrand').addEventListener('change', e => { state.brand = e.target.value; page = 1; render(); });
-    Utils.$('baitCat').addEventListener('change', e => { state.cat = e.target.value; page = 1; render(); });
-    Utils.$('baitKw').addEventListener('input', Utils.debounce(e => { state.kw = e.target.value.trim(); page = 1; render(); }, 250));
+    const f1 = Utils.$('baitFish'), f2 = Utils.$('baitBrand');
+    if(f1) f1.addEventListener('change', function(e){ state.fish = e.target.value; page = 1; render(); });
+    if(f2) f2.addEventListener('change', function(e){ state.brand = e.target.value; page = 1; render(); });
+    const kw = Utils.$('baitKw');
+    if(kw) kw.addEventListener('input', Utils.debounce(function(e){ state.kw = e.target.value.trim(); page = 1; render(); }, 250));
     render();
   }
-  return { bind: bind, render: render, setKw: v => { state.kw = v; page = 1; render(); }, state: state };
+  return { bind: bind, render: render, setKw: function(v){ state.kw = v; page = 1; render(); }, state: state, bigCat: bigCat };
 })();
 
 /* ============================================================
