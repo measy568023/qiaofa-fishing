@@ -4,7 +4,7 @@
  * 模块：BaitMatch / BaitView / Calc / Tech / Search / UI / UpdateCheck / boot
  * ============================================================ */
 
-const APP_VERSION = '2.4.0';
+const APP_VERSION = '2.4.1';
 
 /* ============================================================
  * BaitMatch（配饵中心：经典配方 + 收藏到我的饵料）
@@ -431,7 +431,7 @@ const Calc = (() => {
     Utils.$('calcResultTitle').textContent = '推荐钓组方案 · ' + f.name + '（' + inp.month + '月 · ' + season + '季）';
     Utils.$('resTip').textContent = tipNote;
     Utils.$('resLeadRange').textContent = range;
-    Utils.$('resLead').textContent = lead + ' g';
+    Utils.$('resLead').textContent = lead + ' g' + (lead > 6 ? '（轻口可减 2g）' : '');
     Utils.$('resLeadMatch').innerHTML = matchNote;
     Utils.$('resLine').textContent = f.rig.main + ' / ' + f.rig.sub;
     Utils.$('resHook').textContent = f.rig.hook;
@@ -545,11 +545,41 @@ const LogBook = (() => {
   let list = Store.get(KEY, []);
   function save(){ Store.set(KEY, list); }
   function todayStr(){ const d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  function statsHtml(){
+    if(!list.length) return '';
+    const bySpot = {}, byFish = {}, byTime = {};
+    let totalCatch = 0, openDays = 0;
+    list.forEach(function(r){
+      const c = r.count || 0;
+      totalCatch += c;
+      if(c > 0) openDays++;
+      if(r.spot){ bySpot[r.spot] = (bySpot[r.spot] || 0) + c; }
+      if(r.fish){ byFish[r.fish] = (byFish[r.fish] || 0) + c; }
+      if(r.time){ byTime[r.time] = (byTime[r.time] || 0) + c; }
+    });
+    const top = function(obj, n){
+      return Object.keys(obj).map(function(k){ return { k: k, v: obj[k] }; })
+        .sort(function(a, b){ return b.v - a.v; }).slice(0, n);
+    };
+    const sTop = top(bySpot, 3), fTop = top(byFish, 3), tTop = top(byTime, 3);
+    let h = [];
+    h.push('<div class="log-stats">');
+    h.push('<div class="ls-grid">');
+    h.push('<div class="ls-item"><b>' + list.length + '</b>次出钓</div>');
+    h.push('<div class="ls-item"><b>' + totalCatch + '</b>条渔获</div>');
+    h.push('<div class="ls-item"><b>' + Math.round(openDays / list.length * 100) + '%</b>开口率</div>');
+    h.push('</div>');
+    if(sTop.length) h.push('<div class="ls-line">🏆 最出鱼钓位：' + sTop.map(function(x){ return '<b>' + x.k + '</b>（' + x.v + '条）'; }).join('、') + '</div>');
+    if(fTop.length) h.push('<div class="ls-line">🐟 最出鱼鱼种：' + fTop.map(function(x){ return '<b>' + x.k + '</b>（' + x.v + '条）'; }).join('、') + '</div>');
+    if(tTop.length) h.push('<div class="ls-line">⏰ 最佳时段：' + tTop.map(function(x){ return '<b>' + x.k + '</b>（' + x.v + '条）'; }).join('、') + '</div>');
+    h.push('</div>');
+    return h.join('');
+  }
   function render(){
     const box = Utils.$('logList');
     if(!box) return;
     if(!list.length){ box.innerHTML = '<div class="mb-empty">还没有记录，钓完记一笔，越攒越准</div>'; return; }
-    box.innerHTML = list.slice().reverse().map(function(r, i){
+    box.innerHTML = statsHtml() + list.slice().reverse().map(function(r, i){
       const idx = list.length - 1 - i;
       return '<div class="mybait"><b>' + Utils.esc(r.date || '') + ' · ' + Utils.esc(r.spot || '—') + '</b>' +
         '<span>' + Utils.esc(r.time || '') + '</span>' +
@@ -977,6 +1007,12 @@ const Collapse = (() => {
     techFish.innerHTML = '<option value="">全部鱼种</option>' + fishOpts;
     techFish.addEventListener('change', e => {
       Tech.render(e.target.value || null);
+    });
+    const tc = Utils.$('techClear');
+    if(tc) tc.addEventListener('click', function(){
+      techFish.value = '';
+      Tech.render(null);
+      Toast.show('已清除鱼种筛选，显示全部内容', 'info');
     });
   }
   /* 计算器参数记忆恢复 */
