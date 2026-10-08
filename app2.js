@@ -4,7 +4,7 @@
  * 模块：BaitMatch / BaitView / Calc / Tech / Search / UI / UpdateCheck / boot
  * ============================================================ */
 
-const APP_VERSION = '2.3.5';
+const APP_VERSION = '2.4.0';
 
 /* ============================================================
  * BaitMatch（配饵中心：经典配方 + 收藏到我的饵料）
@@ -32,14 +32,30 @@ const BaitMatch = (() => {
     Toast.show('已添加：' + b.name + '（' + c + '）', 'info');
     return true;
   }
+  let pickTab = '全部';
+  const PICK_TABS = ['全部','主攻饵','状态饵','添加剂','窝料','天然饵','活饵'];
   function renderPick(kw){
     const box = Utils.$('pickList');
     if(!box) return;
     const k = (kw || '').toLowerCase();
-    const items = (DATA.baits || []).filter(function(b){ return !k || (b.brand + b.name + b.flavor + (b.cat || '') + (b.note || '')).toLowerCase().indexOf(k) >= 0; }).slice(0, 15);
+    const tabBox = Utils.$('pickTabs');
+    if(tabBox){
+      tabBox.innerHTML = PICK_TABS.map(function(t){ return '<button class="pick-tab" data-pt="' + t + '"' + (pickTab === t ? ' data-on="1"' : '') + '>' + t + '</button>'; }).join('');
+      tabBox.querySelectorAll('.pick-tab').forEach(function(el){
+        el.addEventListener('click', function(){
+          pickTab = el.dataset.pt;
+          renderPick(Utils.$('pickKw') ? Utils.$('pickKw').value.trim() : '');
+        });
+      });
+    }
+    const bigC = (typeof BaitView !== 'undefined' && BaitView.bigCat) ? BaitView.bigCat : function(c){ return c; };
+    const items = (DATA.baits || []).filter(function(b){
+      if(pickTab !== '全部' && bigC(b.cat) !== pickTab) return false;
+      return !k || (b.brand + b.name + b.flavor + (b.cat || '') + (b.note || '')).toLowerCase().indexOf(k) >= 0;
+    }).slice(0, 15);
     if(!items.length){ box.innerHTML = '<div class="mb-empty">无匹配饵料，可尝试其他关键词</div>'; return; }
     box.innerHTML = items.map(function(b){
-      return '<div class="pick-item" data-pick="' + Utils.esc(b.name) + '"><b>' + Utils.esc(b.name) + '</b><span class="p-meta">' + Utils.esc(b.brand) + ' · ' + Utils.esc(b.cat) + ' · ' + Utils.esc(b.flavor) + '</span></div>';
+      return '<div class="pick-item" data-pick="' + Utils.esc(b.name) + '"><b>' + Utils.esc(b.name) + '</b><span class="p-meta">' + Utils.esc(b.brand) + ' · ' + bigC(b.cat) + ' · ' + Utils.esc(b.flavor) + '</span></div>';
     }).join('');
     box.querySelectorAll('[data-pick]').forEach(function(el){
       el.addEventListener('click', function(){ addOne(el.dataset.pick); });
@@ -118,7 +134,10 @@ const BaitMatch = (() => {
       '<select id="addBaitCat"><option value="main">主攻饵</option><option value="state">状态饵</option><option value="add">添加剂</option><option value="nest">窝料</option></select>' +
       '<button id="addBaitBtn">添加</button>' +
       '<button id="pickBaitBtn" style="background:#fff;color:#0369a1;border:1px solid #bae6fd;">📚 挑选</button></div>' +
-      '<div class="pick-panel" id="pickPanel" hidden><input id="pickKw" placeholder="搜索饵料名称 / 品牌 / 味型…" autocomplete="off"><div id="pickList"></div></div>';
+      '<div class="pick-panel" id="pickPanel" hidden>' +
+        '<div class="pick-tabs" id="pickTabs"></div>' +
+        '<input id="pickKw" placeholder="搜索饵料名称 / 品牌 / 味型…" autocomplete="off">' +
+        '<div id="pickList"></div></div>';
     box.innerHTML = addbarHtml +
       '<div style="margin-bottom:6px;display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap;">' +
         ((removedCnt || addedCnt) ? '<span style="font-size:.76rem;color:var(--muted);align-self:center;">已移除 ' + removedCnt + ' 款 / 已添加 ' + addedCnt + ' 款，可重置恢复</span>' : '') +
@@ -199,28 +218,46 @@ const BaitMatch = (() => {
  * ============================================================ */
 const BaitView = (() => {
   const PAGE = 18;
+  const TABS = ['全部','主攻饵','基础饵','状态饵','添加剂','窝料','天然饵','活饵','散炮'];
   let page = 1;
-  let state = { fish:'', brand:'', cat:'', kw:'' };
+  let state = { tab:'全部', fish:'', brand:'', kw:'' };
+  function bigCat(cat){
+    if(cat === '状态饵') return '状态饵';
+    if(cat === '添加剂') return '添加剂';
+    if(cat === '窝料') return '窝料';
+    if(cat === '基础饵') return '基础饵';
+    if(cat === '散炮') return '散炮';
+    if(cat === '活饵') return '活饵';
+    if(cat === '玉米麦粒') return '天然饵';
+    return '主攻饵';
+  }
+  function tabCount(tab){
+    return (DATA.baits || []).filter(b => tab === '全部' || bigCat(b.cat) === tab).length;
+  }
   function allTargets(){
     const set = new Set();
     (DATA.baits || []).forEach(b => (b.target || []).forEach(t => set.add(t)));
     return Array.from(set).sort();
   }
   function allBrands(){ return Array.from(new Set((DATA.baits || []).map(b => b.brand))).sort(); }
-  function allCats(){ return Array.from(new Set((DATA.baits || []).map(b => b.cat))).sort(); }
   function fillFilters(){
-    const fishSel = Utils.$('baitFish'), brandSel = Utils.$('baitBrand'), catSel = Utils.$('baitCat');
-    if(!fishSel || !brandSel || !catSel) return;
-    fishSel.innerHTML = '<option value="">全部鱼种</option>' + allTargets().map(t => '<option value="' + Utils.esc(t) + '">' + Utils.esc(t) + '</option>').join('');
-    brandSel.innerHTML = '<option value="">全部品牌</option>' + allBrands().map(b => '<option value="' + Utils.esc(b) + '">' + Utils.esc(b) + '</option>').join('');
-    catSel.innerHTML = '<option value="">全部类别</option>' + allCats().map(c => '<option value="' + Utils.esc(c) + '">' + Utils.esc(c) + '</option>').join('');
+    const fishSel = Utils.$('baitFish'), brandSel = Utils.$('baitBrand');
+    if(fishSel) fishSel.innerHTML = '<option value="">全部鱼种</option>' + allTargets().map(t => '<option value="' + Utils.esc(t) + '">' + Utils.esc(t) + '</option>').join('');
+    if(brandSel) brandSel.innerHTML = '<option value="">全部品牌</option>' + allBrands().map(b => '<option value="' + Utils.esc(b) + '">' + Utils.esc(b) + '</option>').join('');
+    const tabBox = Utils.$('baitTabs');
+    if(tabBox){
+      tabBox.innerHTML = TABS.map(t => '<button class="bait-tab" data-tab="' + t + '"' + (state.tab === t ? ' data-on="1"' : '') + '>' + t + '<em>' + tabCount(t) + '</em></button>').join('');
+      tabBox.querySelectorAll('.bait-tab').forEach(function(btn){
+        btn.addEventListener('click', function(){ state.tab = btn.dataset.tab; page = 1; fillFilters(); render(); });
+      });
+    }
   }
   function filtered(){
     const kw = state.kw.toLowerCase();
     return (DATA.baits || []).filter(b => {
+      if(state.tab !== '全部' && bigCat(b.cat) !== state.tab) return false;
       if(state.fish && !(b.target || []).includes(state.fish)) return false;
       if(state.brand && b.brand !== state.brand) return false;
-      if(state.cat && b.cat !== state.cat) return false;
       if(kw){
         const hay = (b.brand + b.name + b.flavor + b.note + (b.target || []).join('')).toLowerCase();
         if(hay.indexOf(kw) < 0) return false;
@@ -237,15 +274,18 @@ const BaitView = (() => {
     const slice = list.slice((page - 1) * PAGE, page * PAGE);
     const box = Utils.$('baitList');
     if(!box) return;
-    Utils.$('baitCount').textContent = '共 ' + total + ' 款饵料' + (state.kw ? '（搜索：' + state.kw + '）' : '');
+    Utils.$('baitCount').textContent = '共 ' + total + ' 款饵料' + (state.tab !== '全部' ? '（' + state.tab + '）' : '') + (state.kw ? ' · 搜索：' + state.kw : '');
     if(!slice.length){
       box.innerHTML = '<div class="bait-empty">没有符合条件的饵料，换个关键词试试</div>';
     } else {
       box.innerHTML = slice.map(b => {
         const targets = (b.target || []).map(t => '<span class="tag">' + Utils.esc(t) + '</span>').join('');
         const seasons = (b.seasons || []).map(s => '<span class="tag gold">' + s + '</span>').join('');
+        const bc = bigCat(b.cat);
         return '<div class="bait-item">' +
-          '<div class="bi-top"><b>' + Utils.esc(b.name) + '</b><span class="bi-cat">' + Utils.esc(b.brand) + ' · ' + Utils.esc(b.cat) + '</span></div>' +
+          '<div class="bi-top"><b>' + Utils.esc(b.name) + '</b>' +
+            '<span class="tag green">' + bc + '</span>' +
+            '<span class="bi-cat">' + Utils.esc(b.brand) + ' · ' + Utils.esc(b.cat) + '</span></div>' +
           (b.waterRatio ? '<div class="bi-water">💧 水比 / 用法：' + Utils.esc(b.waterRatio) + '</div>' : '') +
           '<div class="bi-tags">' + targets + seasons + '</div>' +
           '<div class="bi-note">' + Utils.esc(b.flavor) + ' · ' + Utils.esc(b.note) + '</div>' +
@@ -262,13 +302,14 @@ const BaitView = (() => {
   }
   function bind(){
     fillFilters();
-    Utils.$('baitFish').addEventListener('change', e => { state.fish = e.target.value; page = 1; render(); });
-    Utils.$('baitBrand').addEventListener('change', e => { state.brand = e.target.value; page = 1; render(); });
-    Utils.$('baitCat').addEventListener('change', e => { state.cat = e.target.value; page = 1; render(); });
-    Utils.$('baitKw').addEventListener('input', Utils.debounce(e => { state.kw = e.target.value.trim(); page = 1; render(); }, 250));
+    const f1 = Utils.$('baitFish'), f2 = Utils.$('baitBrand');
+    if(f1) f1.addEventListener('change', function(e){ state.fish = e.target.value; page = 1; render(); });
+    if(f2) f2.addEventListener('change', function(e){ state.brand = e.target.value; page = 1; render(); });
+    const kw = Utils.$('baitKw');
+    if(kw) kw.addEventListener('input', Utils.debounce(function(e){ state.kw = e.target.value.trim(); page = 1; render(); }, 250));
     render();
   }
-  return { bind: bind, render: render, setKw: v => { state.kw = v; page = 1; render(); }, state: state };
+  return { bind: bind, render: render, setKw: function(v){ state.kw = v; page = 1; render(); }, state: state, bigCat: bigCat };
 })();
 
 /* ============================================================
