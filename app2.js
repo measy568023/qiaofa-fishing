@@ -4,7 +4,7 @@
  * 模块：BaitMatch / BaitView / Calc / Tech / Search / UI / UpdateCheck / boot
  * ============================================================ */
 
-const APP_VERSION = '2.4.1';
+const APP_VERSION = '2.4.2';
 
 /* ============================================================
  * BaitMatch（配饵中心：经典配方 + 收藏到我的饵料）
@@ -446,6 +446,8 @@ const Calc = (() => {
     const tips = buildTips(inp, f);
     Utils.$('resTipsTitle').textContent = '作钓小贴士（' + f.name + ' · ' + inp.month + '月 · ' + inp.flow.name + ' · ' + inp.wind.name + '）：';
     Utils.$('resTips').innerHTML = tips.map(t => '<li>' + Utils.esc(t) + '</li>').join('');
+    const rw = Utils.$('resWeather');
+    if(rw) rw.innerHTML = '<div class="cw-title">🌦️ 天气适配分析（结合当前天气参数）：</div>' + calcWeatherAdvice(f, (typeof Weather !== 'undefined' && Weather.getLastData) ? Weather.getLastData() : null);
     const toMatch = Utils.$('toMatch');
     if(toMatch){ toMatch.textContent = '🎣 查看 ' + f.name + ' 配饵方案 →'; toMatch.onclick = function(){ openMatch(f.id, inp.month); }; }
     const toTech = Utils.$('toTech');
@@ -505,6 +507,33 @@ const Calc = (() => {
 })();
 
 /* ===== 全局工具：复制文本 / 今日速览 / 钓况记录本 ===== */
+/* 计算器结果：天气适配分析（结合温度/气压/风/湿度/降水） */
+function calcWeatherAdvice(f, wd){
+  if(!wd || typeof wd.temp !== 'number') return '<div class="cw-line">暂无实时天气数据，先在顶部获取天气后再分析。</div>';
+  const L = [];
+  const t = wd.temp;
+  if(t < 10) L.push('❄️ 温度 ' + Math.round(t) + '°C：偏低，' + f.name + '（最适 ' + f.tempPref.min + '-' + f.tempPref.max + '°C）开口弱，用浓腥/活饵、钓深水');
+  else if(t >= f.tempPref.min && t <= f.tempPref.max) L.push('✅ 温度 ' + Math.round(t) + '°C：正处' + f.name + '最适区间，活性好，可按方案作钓');
+  else L.push('☀️ 温度 ' + Math.round(t) + '°C：偏高，' + f.name + '活性受抑，早晚窗口期钓桥底阴凉');
+  if(wd.press != null){
+    if(wd.press < 1000) L.push('💨 气压 ' + Math.round(wd.press) + 'hPa：低压闷热，鱼易上浮，改钓半水或从底往上搜层');
+    else if(wd.press <= 1022) L.push('📈 气压 ' + Math.round(wd.press) + 'hPa：适宜，正常守底即可');
+    else L.push('📈 气压 ' + Math.round(wd.press) + 'hPa：偏高，鱼活跃，钓深水更稳');
+  }
+  if(wd.wind != null){
+    if(wd.wind < 8) L.push('🍃 静风：轻铅灵敏钓底，信号最清晰');
+    else if(wd.wind < 20) L.push('🌬️ 轻风 ' + Math.round(wd.wind) + 'km/h：正常作钓，只抓有力上下口');
+    else L.push('🌪️ 风 ' + Math.round(wd.wind) + 'km/h：偏大，搓硬饵加粘粉、加重铅绷紧风线');
+  }
+  if(wd.hum != null){
+    if(wd.hum > 85) L.push('💧 湿度 ' + Math.round(wd.hum) + '%：高湿易返水，饵开干散、少开勤开');
+    else if(wd.hum < 45) L.push('💨 湿度 ' + Math.round(wd.hum) + '%：干燥，饵可略软并及时补窝');
+  }
+  if(wd.precipProb != null && wd.precipProb > 60) L.push('🌧️ 降水概率 ' + wd.precipProb + '%：雨前腥饵口快，雷雨前后禁钓');
+  const bad = L.filter(function(x){ return x.indexOf('❄️') >= 0 || x.indexOf('💨') >= 0 || x.indexOf('🌪️') >= 0 || x.indexOf('☀️') >= 0; }).length;
+  L.push('🟢 综合：' + (bad === 0 ? '这套钓组与当前天气匹配良好' : '有 ' + bad + ' 项需按上面提示调整，更稳'));
+  return L.map(function(x){ return '<div class="cw-line">' + Utils.esc(x) + '</div>'; }).join('');
+}
 function copyText(txt){
   if(!txt) return;
   if(navigator.clipboard && navigator.clipboard.writeText){
@@ -528,7 +557,6 @@ function renderToday(){
     const h = [];
     h.push('<div class="td-item"><b>🎯 目标鱼</b>：' + f.name + ' · 最适水温 ' + f.tempPref.min + '~' + f.tempPref.max + '°C</div>');
     h.push('<div class="td-item"><b>🎣 推荐钓组</b>：' + Utils.esc(f.rig.main) + ' / ' + Utils.esc(f.rig.sub) + ' · ' + Utils.esc(f.rig.hook) + '</div>');
-    h.push('<div class="td-item"><b>📋 经典配方</b>：' + Utils.esc(f.formula) + '</div>');
     h.push('<div class="td-item"><b>🗓️ 本月要点（' + season + '季）</b>：' + Utils.esc(f.tips[season] || '') + '</div>');
     if(wd && typeof wd.temp === 'number'){
       if(wd.temp < 10) h.push('<div class="td-item"><b>🌡️ 今日用饵</b>：低温，浓腥/红虫为主，加虾粉千里香</div>');
@@ -1040,20 +1068,22 @@ const Collapse = (() => {
   /* 初始化月份季节提示 */
   const ms = Utils.$('monthMsg');
   if(ms) ms.textContent = '当前：' + nowMonth + '月 · ' + ((DATA.monthSeason || {})[nowMonth] || '') + '季';
-  /* 模块绑定 */
-  /* 天气优先加载（避免被其他模块初始化阻塞） */
-  Weather.bind();
-  Weather.init();
-  renderToday();
+  /* 模块绑定（天气优先；各模块独立容错，单个失败不影响其他） */
+  try{ Weather.bind(); Weather.init(); }catch(e){ console.warn('[init] Weather 失败：', e); }
+  try{ renderToday(); }catch(e){ console.warn('[init] renderToday 失败：', e); }
   FishContext.onChange(renderToday);
-  BaitView.bind();
-  BaitMatch.bind();
-  Calc.bind();
-  Tech.render(null);
-  Search.bind();
-  UI.bind();
-  Collapse.init();
-  LogBook.bind();
+  try{ LogBook.bind(); }catch(e){ console.warn('[init] LogBook 失败：', e); }
+  [
+    ['BaitView', BaitView.bind],
+    ['BaitMatch', BaitMatch.bind],
+    ['Calc', Calc.bind],
+    ['Tech', function(){ Tech.render(null); }],
+    ['Search', Search.bind],
+    ['UI', UI.bind],
+    ['Collapse', Collapse.init]
+  ].forEach(function(pair){
+    try{ pair[1](); }catch(e){ console.warn('[init] ' + pair[0] + ' 模块初始化失败：', e); }
+  });
   /* PWA：注册 Service Worker */
   if('serviceWorker' in navigator && location.protocol !== 'file:' && window.isSecureContext){
     window.addEventListener('load', function(){
