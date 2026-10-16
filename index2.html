@@ -108,6 +108,18 @@
     background:rgba(24,28,32,.92);color:#fff;font-size:.86rem;padding:10px 20px;border-radius:999px;
     opacity:0;transition:.25s;pointer-events:none;z-index:99;max-width:86vw;text-align:center;}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  /* 设置弹窗（用 CSS 控制显隐，避免 inline display 覆盖 hidden） */
+  #setModal{position:fixed;inset:0;background:rgba(12,16,18,.5);align-items:center;justify-content:center;padding:20px;z-index:20;display:none;}
+  #setModal:not([hidden]){display:flex;}
+  .modal-card{background:var(--card);border-radius:16px;padding:22px;max-width:440px;width:100%;max-height:86vh;overflow-y:auto;}
+  .modal-card h2{color:var(--ink);letter-spacing:0;font-size:1.05rem;margin-bottom:14px;}
+  .fld{display:block;font-size:.88rem;color:var(--sub);margin-bottom:12px;}
+  .fld input,.fld select{width:100%;margin-top:4px;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:16px;background:var(--bg);color:var(--ink);outline:none;}
+  .spot-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:.86rem;flex-wrap:wrap;}
+  .spot-row b{color:var(--ink);}
+  .spot-row .mini-btn{border:1px solid var(--line);background:var(--card);color:var(--main);border-radius:8px;padding:5px 12px;font-size:.78rem;cursor:pointer;min-height:34px;}
+  .spot-row .mini-btn.danger{color:var(--bad);}
+  .spot-empty{color:var(--faint);font-size:.82rem;padding:6px 0;}
   @media(max-width:430px){
     .score{font-size:3.6rem;}
     .wins{grid-template-columns:repeat(2,1fr);}
@@ -210,22 +222,30 @@
 </footer>
 
 <!-- 设置弹窗 -->
-<div id="setModal" hidden style="position:fixed;inset:0;background:rgba(12,16,18,.5);display:flex;align-items:center;justify-content:center;padding:20px;z-index:20;">
-  <div style="background:var(--card);border-radius:16px;padding:22px;max-width:420px;width:100%;">
-    <h2 class="serif" style="color:var(--ink);letter-spacing:0;font-size:1.05rem;margin-bottom:14px;">设置</h2>
-    <label style="display:block;font-size:.88rem;color:var(--sub);margin-bottom:12px;">城市（手动输入更准）
-      <input id="setCity" style="width:100%;margin-top:4px;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:16px;background:var(--bg);color:var(--ink);outline:none;" placeholder="如：宜宾">
+<div id="setModal" hidden>
+  <div class="modal-card">
+    <h2 class="serif">设置</h2>
+    <label class="fld">城市（手动输入更准）
+      <input id="setCity" placeholder="如：宜宾">
     </label>
-    <label style="display:block;font-size:.88rem;color:var(--sub);margin-bottom:14px;">天气数据源
-      <select id="setSrc" style="width:100%;margin-top:4px;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:16px;background:var(--bg);color:var(--ink);outline:none;">
+    <label class="fld">天气数据源
+      <select id="setSrc">
         <option value="openmeteo">Open-Meteo（免费免Key）</option>
         <option value="qweather">和风天气（需Key）</option>
       </select>
     </label>
-    <label style="display:block;font-size:.88rem;color:var(--sub);margin-bottom:14px;">API Key（和风时填）
-      <input id="setKey" style="width:100%;margin-top:4px;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:16px;background:var(--bg);color:var(--ink);outline:none;" placeholder="选填">
+    <label class="fld">API Key（和风时填）
+      <input id="setKey" placeholder="选填">
     </label>
-    <div style="display:flex;gap:10px;justify-content:flex-end;">
+    <div style="border-top:1px solid var(--line);margin-top:4px;padding-top:12px;">
+      <div style="font-size:.88rem;color:var(--sub);margin-bottom:8px;">我的钓点（桥墩）</div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <input id="spotName" placeholder="桥墩名，如：南门桥3号墩" style="flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:15px;background:var(--bg);color:var(--ink);outline:none;">
+        <button class="mini-btn" id="spotAdd" style="border:1px solid var(--line);background:var(--card);color:var(--main);border-radius:10px;padding:0 14px;font-size:.82rem;cursor:pointer;white-space:nowrap;">＋存当前点</button>
+      </div>
+      <div id="spotList"></div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;">
       <button class="icobtn" id="setClose">关闭</button>
       <button class="icobtn" id="setSave" style="background:var(--main);color:#fff;border-color:var(--main);">保存</button>
     </div>
@@ -404,6 +424,8 @@ function renderToday(){
     '<span>风 <b>' + fam + '（' + Math.round(WX.wind) + 'km/h）</b></span>' +
     '<span>湿度 <b>' + Math.round(WX.hum) + '%</b></span>' +
     (WX.sunrise ? '<span>日出 <b>' + WX.sunrise + '</b> / 日落 <b>' + WX.sunset + '</b></span>' : '') +
+    (WX.waterTemp != null ? '<span>水温(估) <b>' + WX.waterTemp.toFixed(1) + '°C</b></span>' : '') +
+    (WX.doLevel != null ? '<span>溶氧(估) <b>' + WX.doLevel.toFixed(1) + ' mg/L</b>（' + (WX.doLevel >= 7 ? '充足' : WX.doLevel >= 5 ? '一般' : '偏低') + '）</span>' : '') +
     '<span>月相 <b>' + r.moon + '</b></span>' +
     '<span>昼夜温差 <b>' + (WX.tmax != null ? Math.round(WX.tmax - WX.tmin) + '°C' : '--') + '</b></span>';
   /* 一句话建议 */
@@ -455,7 +477,7 @@ async function loadWeather(){
       '&current=temperature_2m,relative_humidity_2m,surface_pressure,wind_speed_10m' +
       '&hourly=surface_pressure' +
       '&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset' +
-      '&timezone=auto&forecast_days=2';
+      '&timezone=auto&past_days=3&forecast_days=2';
     const d = await getJSON(url, 9000);
     const now = new Date();
     const hNow = now.getHours();
@@ -466,6 +488,20 @@ async function loadWeather(){
       const end = idxNow >= 0 ? idxNow : Math.min(23, d.hourly.time.length - 1);
       const start = Math.max(0, end - 23);
       for(let i = start; i <= end; i++) hrs.push({ h: i, p: d.hourly.surface_pressure[i] });
+    }
+    /* 水温估算（水体滞后）：近 3 天加权均温 */
+    let waterTemp = null, doLevel = null;
+    if(d.daily && d.daily.time){
+      const tl = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+      const ti = d.daily.time.indexOf(tl);
+      if(ti >= 2){
+        const meanAt = i => (d.daily.temperature_2m_max[i] + d.daily.temperature_2m_min[i]) / 2;
+        waterTemp = 0.5 * meanAt(ti) + 0.3 * meanAt(ti-1) + 0.2 * meanAt(ti-2);
+        /* 淡水平衡溶氧（mg/L）× 气压修正 */
+        const T = waterTemp;
+        const doSat = 14.652 - 0.41022*T + 0.007991*T*T - 0.000077774*T*T*T;
+        doLevel = doSat * (d.current.surface_pressure / 1013.25);
+      }
     }
     const sr = d.daily.sunrise && d.daily.sunrise[0] ? d.daily.sunrise[0] : null;
     const ss = d.daily.sunset && d.daily.sunset[0] ? d.daily.sunset[0] : null;
@@ -480,6 +516,7 @@ async function loadWeather(){
       hours: hrs,
       tmax: d.daily.temperature_2m_max ? d.daily.temperature_2m_max[0] : null,
       tmin: d.daily.temperature_2m_min ? d.daily.temperature_2m_min[0] : null,
+      waterTemp: waterTemp, doLevel: doLevel,
       sunrise: fmt(sr), sunset: fmt(ss), sunriseH: toH(sr), sunsetH: toH(ss),
       cityName: CITY.name
     };
@@ -578,6 +615,35 @@ function renderRecipe(){
     }).join('');
 }
 
+/* ============ 我的钓点（桥墩收藏） ============ */
+function spots(){ return store.get('qf2_spots', []); }
+function saveSpots(s){ store.set('qf2_spots', s); }
+function renderSpots(){
+  const box = $('spotList');
+  if(!box) return;
+  const sp = spots();
+  if(!sp.length){ box.innerHTML = '<div class="spot-empty">还没有收藏钓点。到桥边点「＋存当前点」，下次一键切过来。</div>'; return; }
+  box.innerHTML = sp.map((s, i) =>
+    '<div class="spot-row"><b>' + esc(s.name) + '</b>' +
+    '<span style="color:var(--faint);font-size:.76rem;">' + Number(s.lat).toFixed(3) + ',' + Number(s.lon).toFixed(3) + '</span>' +
+    '<button class="mini-btn" data-go="' + i + '">切到这点</button>' +
+    '<button class="mini-btn danger" data-rm="' + i + '">删除</button></div>').join('');
+  box.querySelectorAll('[data-go]').forEach(el => el.addEventListener('click', () => {
+    const s = spots()[parseInt(el.dataset.go, 10)];
+    if(!s) return;
+    CITY = { name: s.name, lat: s.lat, lon: s.lon };
+    store.set('qf2_city', CITY);
+    $('cityName').textContent = CITY.name;
+    $('setModal').hidden = true;
+    toast('已切到：' + s.name);
+    loadWeather();
+  }));
+  box.querySelectorAll('[data-rm]').forEach(el => el.addEventListener('click', () => {
+    const arr = spots(); arr.splice(parseInt(el.dataset.rm, 10), 1); saveSpots(arr); renderSpots();
+    toast('已删除钓点');
+  }));
+}
+
 /* ============ 初始化 ============ */
 (function init(){
   /* 主题 */
@@ -651,6 +717,15 @@ function renderRecipe(){
   $('cBtn').addEventListener('click', calcRig);
   renderRecipe(); calcRig();
   renderLogs();
+  /* 我的钓点 */
+  $('spotAdd').addEventListener('click', () => {
+    const nm = $('spotName').value.trim();
+    const arr = spots();
+    arr.push({ name: nm || (CITY.name + '·钓点'), lat: CITY.lat, lon: CITY.lon });
+    saveSpots(arr); $('spotName').value = ''; renderSpots();
+    toast('已收藏钓点：' + (nm || CITY.name));
+  });
+  renderSpots();
   /* 天气 */
   $('cityName').textContent = CITY.name;
   loadWeather();
