@@ -4,7 +4,7 @@
  * 模块：BaitMatch / BaitView / Calc / Tech / Search / UI / UpdateCheck / boot
  * ============================================================ */
 
-const APP_VERSION = '2.5.0';
+const APP_VERSION = '2.6.0';
 
 /* ============================================================
  * BaitMatch（配饵中心：经典配方 + 收藏到我的饵料）
@@ -564,7 +564,7 @@ function renderToday(){
       else h.push('<div class="td-item"><b>🌡️ 今日用饵</b>：偏热，本味/谷物+少量果酸，避杂鱼</div>');
       if(wd.moon) h.push('<div class="td-item"><b>🌙 月相</b>：' + wd.moon + (wd.sunrise ? ' · 日出 ' + wd.sunrise + ' / 日落 ' + wd.sunset : '') + '</div>');
     }
-    h.push('<div class="td-actions"><a href="#s0" class="rel-link">🧮 详细计算</a><a href="#s-tech" class="rel-link">📖 作战手册</a></div>');
+    h.push('<div class="td-actions"><a href="#s-tech" class="rel-link">📖 作战手册</a></div>');
     body.innerHTML = h.join('');
   }catch(e){ console.warn('[今日速览]', e); }
 }
@@ -736,18 +736,15 @@ const Tech = (() => {
   return { render: render };
 })();
 
-/* 全局联动：点击鱼种 → 切到钓组计算器 */
+/* 全局联动：点击鱼种 → 切换目标鱼并回到天气（指数与适配分析联动） */
 function jumpToFish(fishId){
   const f = (DATA.fishProfiles || {})[fishId];
-  const cs = Utils.$('calcFish');
-  if(cs) cs.value = fishId;
-  try{ Calc.run(); }catch(e){}
-  const s0 = document.getElementById('s0');
-  if(s0) s0.scrollIntoView({ behavior:'smooth' });
-  Toast.show('已切到 ' + (f ? f.name : '') + ' 的钓组计算', 'info');
+  FishContext.set(fishId);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  Toast.show('已切换目标鱼：' + (f ? f.name : '') + '（看顶部天气指数与适配分析）', 'info');
   Bridge.post('guide_fish', { fish: f ? f.name : fishId });
 }
-function openMatch(fishId, month){ jumpToFish(fishId); }
+function openMatch(fishId){ jumpToFish(fishId); }
 
 /* ============================================================
  * Search（站内搜索）
@@ -806,7 +803,7 @@ const Search = (() => {
       panel.querySelectorAll('.search-item').forEach(el => {
         el.addEventListener('click', function(){
           const h = JSON.parse(el.dataset.srch);
-          if(h.type === 'fish'){ Utils.$('calcFish').value = h.id; Calc.run(); document.getElementById('s0').scrollIntoView({behavior:'smooth'}); }
+          if(h.type === 'fish'){ FishContext.set(h.id); window.scrollTo({ top: 0, behavior: 'smooth' }); }
           else document.getElementById(h.id).scrollIntoView({behavior:'smooth'});
           panel.hidden = true;
           Utils.$('pageSearch').value = '';
@@ -834,7 +831,7 @@ const UI = (() => {
   const navLinks = [];
   function bindNav(){
     document.querySelectorAll('.topnav a').forEach(a => navLinks.push(a));
-    const sections = ['s0','s-tech'].map(id => document.getElementById(id)).filter(Boolean);
+    const sections = ['s-tech'].map(id => document.getElementById(id)).filter(Boolean);
     const techBlocks = ['t-ops','t-methods','t-spots'].map(id => document.getElementById(id)).filter(Boolean);
     const onScroll = Utils.throttleRaf(() => {
       const y = window.scrollY + 130;
@@ -917,7 +914,7 @@ const UI = (() => {
  * Collapse（三大模块折叠/展开）
  * ============================================================ */
 const Collapse = (() => {
-  const SECTIONS = ['s0', 's-tech'];
+  const SECTIONS = ['s-tech'];
   function updateBtn(){
     const btn = Utils.$('foldAllBtn');
     if(!btn) return;
@@ -1066,7 +1063,6 @@ const Collapse = (() => {
   FishContext.onChange(renderToday);
   try{ LogBook.bind(); }catch(e){ console.warn('[init] LogBook 失败：', e); }
   [
-    ['Calc', Calc.bind],
     ['Tech', function(){ Tech.render(null); }],
     ['Search', Search.bind],
     ['UI', UI.bind],
