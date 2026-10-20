@@ -207,6 +207,15 @@ const Weather = (() => {
     try{ const d = new Date(v); if(!isNaN(d.getTime())) return ('0'+d.getHours()).slice(-2) + ':' + ('0'+d.getMinutes()).slice(-2); }catch(e){}
     return '--';
   }
+  /* 天气适配分析（结合当前目标鱼，由 app2.js 的 calcWeatherAdvice 渲染） */
+  function fillWxAdvice(){
+    const el = Utils.$('wxAdvice');
+    if(!el) return;
+    if(typeof calcWeatherAdvice !== 'function'){ el.innerHTML = ''; return; }
+    const f = FishContext.getFish();
+    if(!f){ el.innerHTML = ''; return; }
+    el.innerHTML = '<div class="wx-title">🌦️ 天气适配分析（目标鱼：' + f.name + '）</div>' + calcWeatherAdvice(f, lastData);
+  }
   function calcIndex(t, windKmh, precipProb, press, hum, extras){
     const pref = FishContext.getFish() ? FishContext.getFish().tempPref : null;
     let s = 60;
@@ -396,6 +405,7 @@ const Weather = (() => {
     Utils.$('offlineTip').hidden = !isOffline;
     Utils.$('wbMeta').textContent = metaText('openmeteo');
     lastData = { temp: data.current.temperature_2m, press: data.current.surface_pressure, hum: data.current.relative_humidity_2m, wind: data.current.wind_speed_10m, precipProb: days.precipitation_probability_max[0] || 0, src:'openmeteo', tmax: tmax0, tmin: tmin0, sunrise: fmtHM(sr), sunset: fmtHM(ss), moon: moon.name, yesterdayMax: opt.yesterdayMax || null };
+    fillWxAdvice();
     Bridge.post('weather', { city: currentCity.name, temp: Math.round(data.current.temperature_2m), score });
   }
   function renderAmap(j){
@@ -437,6 +447,7 @@ const Weather = (() => {
     Utils.$('offlineTip').hidden = true;
     Utils.$('wbMeta').textContent = metaText('amap');
     lastData = { temp: parseFloat(live.temperature), press: 1013, hum: parseFloat(live.humidity || '60'), wind: windKmh, precipProb: 20, src:'amap', tmax: tmaxA, tmin: tminA, moon: moonA.name };
+    fillWxAdvice();
     Bridge.post('weather', { city: currentCity.name, temp: live.temperature, score });
   }
   function renderQw(j){
@@ -463,6 +474,7 @@ const Weather = (() => {
     Utils.$('offlineTip').hidden = true;
     Utils.$('wbMeta').textContent = metaText('qweather');
     lastData = { temp: curTemp != null ? curTemp : 20, press: curPress != null ? curPress : 1013, hum: curHum != null ? curHum : 60, wind: curWind != null ? curWind : 5, precipProb: 20, src:'qweather', moon: moonQ.name };
+    fillWxAdvice();
     Bridge.post('weather', { city: currentCity.name, temp: curTemp != null ? Math.round(curTemp) : null, score });
   }
   async function loadWeather(lat, lon){
