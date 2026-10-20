@@ -139,10 +139,10 @@ tailwind.config = {
   .modal-btns button{border:none;border-radius:8px;padding:12px 22px;cursor:pointer;font-size:.92rem;min-height:44px;}
   #saveSet{background:var(--brand);color:#fff;}
   #closeSet{background:#e8eeef;color:#3a4a52;}
-  .calc-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:12px;margin-bottom:16px;}
-  .calc-form>div{position:relative;}
+  .calc-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(168px,100%),1fr));gap:12px;margin-bottom:16px;}
+  .calc-form>div{position:relative;min-width:0;}
   .calc-form label{font-size:.86rem;color:#0b4250;font-weight:600;display:block;margin-bottom:4px;}
-  .calc-form select,.calc-form input[type="number"]{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;font-size:15px;outline:none;background:#fff;color:var(--ink);}
+  .calc-form select,.calc-form input[type="number"]{width:100%;min-width:0;padding:9px 10px;border:1px solid var(--line);border-radius:8px;font-size:15px;outline:none;background:#fff;color:var(--ink);}
   .calc-form select:focus,.calc-form input:focus{border-color:var(--brand);}
   .calc-form .field-error{border-color:var(--danger)!important;background:#fdf3f3;}
   .calc-form .field-msg{font-size:.72rem;color:var(--danger);display:none;}
@@ -233,7 +233,7 @@ tailwind.config = {
     .bait-list{grid-template-columns:1fr;}
     .wb-days{grid-template-columns:repeat(3,1fr);gap:5px;}
     .day{padding:6px 3px;font-size:.84rem;}
-    .calc-form{grid-template-columns:1fr 1fr;}
+    .calc-form{grid-template-columns:1fr;}
     .calc-form>div:last-child{grid-column:1/-1;}
     .tech-nav{top:62px;}
   }
@@ -639,10 +639,10 @@ tailwind.config = {
  * 单独维护此文件并上传覆盖，即可全站更新数据（页面自动检测新版本）。
  * 字段说明见各区块注释。本文件仅包含数据，不含业务逻辑。
  * ============================================================ */
-window.QIAOFA_DATA_VERSION = '2.6.0';
+window.QIAOFA_DATA_VERSION = '2.6.1';
 
 window.QIAOFA_DATA = {
-  version: '2.6.0',
+  version: '2.6.1',
   updatedAt: '2026-09-23',
 
   /* 月份 → 季节映射（计算器按月份联动季节） */
@@ -2107,7 +2107,7 @@ const Weather = (() => {
  * 模块：BaitMatch / BaitView / Calc / Tech / Search / UI / UpdateCheck / boot
  * ============================================================ */
 
-const APP_VERSION = '2.6.0';
+const APP_VERSION = '2.6.1';
 
 /* ============================================================
  * BaitMatch（配饵中心：经典配方 + 收藏到我的饵料）
