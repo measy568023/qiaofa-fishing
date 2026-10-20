@@ -4,7 +4,7 @@
  * 模块：BaitMatch / BaitView / Calc / Tech / Search / UI / UpdateCheck / boot
  * ============================================================ */
 
-const APP_VERSION = '2.4.2';
+const APP_VERSION = '2.5.0';
 
 /* ============================================================
  * BaitMatch（配饵中心：经典配方 + 收藏到我的饵料）
@@ -564,7 +564,7 @@ function renderToday(){
       else h.push('<div class="td-item"><b>🌡️ 今日用饵</b>：偏热，本味/谷物+少量果酸，避杂鱼</div>');
       if(wd.moon) h.push('<div class="td-item"><b>🌙 月相</b>：' + wd.moon + (wd.sunrise ? ' · 日出 ' + wd.sunrise + ' / 日落 ' + wd.sunset : '') + '</div>');
     }
-    h.push('<div class="td-actions"><a href="#s0" class="rel-link">🧮 详细计算</a><a href="#s-bait" class="rel-link">🎣 配饵中心</a><a href="#s-tech" class="rel-link">📖 作战手册</a></div>');
+    h.push('<div class="td-actions"><a href="#s0" class="rel-link">🧮 详细计算</a><a href="#s-tech" class="rel-link">📖 作战手册</a></div>');
     body.innerHTML = h.join('');
   }catch(e){ console.warn('[今日速览]', e); }
 }
@@ -736,22 +736,18 @@ const Tech = (() => {
   return { render: render };
 })();
 
-/* 全局联动：跳转目标鱼（打开配饵方案） */
+/* 全局联动：点击鱼种 → 切到钓组计算器 */
 function jumpToFish(fishId){
   const f = (DATA.fishProfiles || {})[fishId];
-  Utils.$('matchFish').value = fishId;
-  BaitMatch.render();
-  document.getElementById('s-bait').scrollIntoView({ behavior:'smooth' });
-  Toast.show('已打开 ' + (f ? f.name : '') + ' 的配饵方案', 'info');
+  const cs = Utils.$('calcFish');
+  if(cs) cs.value = fishId;
+  try{ Calc.run(); }catch(e){}
+  const s0 = document.getElementById('s0');
+  if(s0) s0.scrollIntoView({ behavior:'smooth' });
+  Toast.show('已切到 ' + (f ? f.name : '') + ' 的钓组计算', 'info');
   Bridge.post('guide_fish', { fish: f ? f.name : fishId });
 }
-function openMatch(fishId, month){
-  BaitMatch.setFish(fishId);
-  if(month && Utils.$('matchMonth')){ Utils.$('matchMonth').value = String(month); }
-  BaitMatch.render();
-  document.getElementById('s-bait').scrollIntoView({ behavior:'smooth' });
-  Toast.show('已生成 ' + ((DATA.fishProfiles || {})[fishId] ? DATA.fishProfiles[fishId].name : '') + ' 配饵方案', 'info');
-}
+function openMatch(fishId, month){ jumpToFish(fishId); }
 
 /* ============================================================
  * Search（站内搜索）
@@ -772,9 +768,6 @@ const Search = (() => {
     });
     (DATA.strategy.spots || []).forEach(s => {
       index.push({ sec:'选位标点', title:s.name, text:s.points.join(' '), type:'block', id:'t-spots' });
-    });
-    (DATA.baits || []).forEach(b => {
-      index.push({ sec:'饵料', title:b.brand + ' · ' + b.name, text:(b.waterRatio || '') + ' ' + b.note, type:'bait', name:b.name });
     });
   }
   function hl(text, kw){
@@ -813,8 +806,7 @@ const Search = (() => {
       panel.querySelectorAll('.search-item').forEach(el => {
         el.addEventListener('click', function(){
           const h = JSON.parse(el.dataset.srch);
-          if(h.type === 'fish'){ Utils.$('matchFish').value = h.id; BaitMatch.render(); document.getElementById('s-bait').scrollIntoView({behavior:'smooth'}); }
-          else if(h.type === 'bait'){ document.getElementById('s-bait').scrollIntoView({behavior:'smooth'}); BaitView.setKw(h.name); Toast.show('已定位饵料：' + h.name, 'info'); }
+          if(h.type === 'fish'){ Utils.$('calcFish').value = h.id; Calc.run(); document.getElementById('s0').scrollIntoView({behavior:'smooth'}); }
           else document.getElementById(h.id).scrollIntoView({behavior:'smooth'});
           panel.hidden = true;
           Utils.$('pageSearch').value = '';
@@ -842,7 +834,7 @@ const UI = (() => {
   const navLinks = [];
   function bindNav(){
     document.querySelectorAll('.topnav a').forEach(a => navLinks.push(a));
-    const sections = ['s0','s-bait','s-tech'].map(id => document.getElementById(id)).filter(Boolean);
+    const sections = ['s0','s-tech'].map(id => document.getElementById(id)).filter(Boolean);
     const techBlocks = ['t-ops','t-methods','t-spots'].map(id => document.getElementById(id)).filter(Boolean);
     const onScroll = Utils.throttleRaf(() => {
       const y = window.scrollY + 130;
@@ -925,7 +917,7 @@ const UI = (() => {
  * Collapse（三大模块折叠/展开）
  * ============================================================ */
 const Collapse = (() => {
-  const SECTIONS = ['s0', 's-bait', 's-tech'];
+  const SECTIONS = ['s0', 's-tech'];
   function updateBtn(){
     const btn = Utils.$('foldAllBtn');
     if(!btn) return;
@@ -1074,8 +1066,6 @@ const Collapse = (() => {
   FishContext.onChange(renderToday);
   try{ LogBook.bind(); }catch(e){ console.warn('[init] LogBook 失败：', e); }
   [
-    ['BaitView', BaitView.bind],
-    ['BaitMatch', BaitMatch.bind],
     ['Calc', Calc.bind],
     ['Tech', function(){ Tech.render(null); }],
     ['Search', Search.bind],
