@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0369a1">
-<meta name="description" content="桥筏钓鱼全攻略：钓组计算器（鱼种×月份×桥高×水深×水流×风力）、饵料库（经典配方与水比）、桥筏作战手册（覆盖31种淡水鱼）、天气与出钓指数（随目标鱼变化）。可离线使用。">
+<meta name="description" content="桥筏钓鱼全攻略：天气与出钓指数（温度/气压/风/湿度/降水/月相多维评分）、桥筏作战手册、安全红线、钓况记录本。可离线使用。">
 <title>桥筏钓鱼全攻略 · 专业工具站</title>
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./assets/icon-192.png">
@@ -380,6 +380,11 @@ tailwind.config = {
   /* 天气配饵建议 + 搭配建议 + 添加饵料条 */
   .wb-factors{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:.78rem;color:#cfeef6;margin:2px 0;}
   .wb-factors span{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:2px 10px;}
+  /* 天气卡内的天气适配分析 */
+  .wx-advice{margin-top:8px;border-top:1px dashed rgba(255,255,255,.25);padding-top:8px;font-size:.82rem;line-height:1.9;}
+  .wx-advice .wx-title{font-weight:700;color:#fff;margin-bottom:2px;}
+  .wx-advice .cw-title{color:#fff;}
+  .wx-advice .cw-line{color:#dcf2f6;}
   /* 今日出钓速览 */
   .today-wrap{max-width:960px;margin:16px auto 0;}
   .today-card{background:rgba(255,255,255,.13);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.25);border-radius:16px;padding:14px 16px;text-align:left;color:#fff;}
@@ -511,6 +516,7 @@ tailwind.config = {
       </div>
       <div class="wb-meta" id="wbMeta"></div>
       <div class="wb-factors" id="wbFactors"></div>
+      <div class="wx-advice" id="wxAdvice"></div>
       <div class="offline-tip" id="offlineTip" hidden>⚠️ 当前为离线参考数据，联网后可获取实时天气</div>
     </div>
   </div>
@@ -524,14 +530,12 @@ tailwind.config = {
 <nav class="topnav" id="topnav">
   <div class="nav-inner">
     <a href="#weather">🌤️ 天气指数</a>
-    <a href="#s0">🧮 钓组计算器</a>
     <a href="#s-tech">📖 作战手册</a>
     <a href="#safety">⚠️ 安全提示</a>
     <a href="#s-log">📒 钓况</a>
   </div>
   <div id="mobileMenu">
     <a href="#weather">🌤️ 天气指数</a>
-    <a href="#s0">🧮 钓组计算器</a>
     <a href="#s-tech">📖 作战手册</a>
     <a href="#safety">⚠️ 安全提示</a>
     <a href="#s-log">📒 钓况</a>
@@ -542,90 +546,6 @@ tailwind.config = {
   <div class="fold-toolbar">
     <button id="foldAllBtn" title="一键折叠/展开三大模块">⤴ 全部折叠</button>
   </div>
-  <!-- 钓组计算器 -->
-  <section id="s0">
-    <div class="sec-head"><div class="num">🧮</div><h2>鱼情与钓组计算器</h2><span class="static-badge">鱼种 × 月份 × 桥高 × 水深 × 水流 × 风力</span></div>
-    <div class="card">
-      <div class="calc-form">
-        <div>
-          <label>目标鱼种</label>
-          <select id="calcFish"></select>
-        </div>
-        <div>
-          <label>作钓月份</label>
-          <select id="calcMonth"></select>
-          <span class="field-msg" id="monthMsg" style="display:block;color:var(--brand2);font-size:.76rem;margin-top:2px;">当前：--</span>
-        </div>
-        <div>
-          <label>水深档位</label>
-          <select id="calcDepth">
-            <option value="shallow">3米以内（浅水区）</option>
-            <option value="mid" selected>3-6米（常规水深）</option>
-            <option value="deep">6-10米（深水桥洞）</option>
-            <option value="extradeep">10米以上（超深水域）</option>
-          </select>
-        </div>
-        <div>
-          <label>自定义水深（米）</label>
-          <input type="number" id="calcDepthNum" min="0.5" max="50" step="0.1" placeholder="留空按档位" inputmode="decimal">
-          <span class="field-msg" id="depthMsg">水深请输入 0.5 ~ 50 之间的数字</span>
-        </div>
-        <div>
-          <label>桥高档位</label>
-          <select id="calcBridge">
-            <option value="low">3米以内（低桥）</option>
-            <option value="mid" selected>3-8米（常规桥）</option>
-            <option value="high">8-15米（高桥）</option>
-            <option value="ultra">15米以上（超高空）</option>
-          </select>
-        </div>
-        <div>
-          <label>自定义桥高（米）</label>
-          <input type="number" id="calcBridgeNum" min="1" max="60" step="0.5" placeholder="留空按档位" inputmode="decimal">
-          <span class="field-msg" id="bridgeMsg">桥高请输入 1 ~ 60 之间的数字</span>
-        </div>
-        <div>
-          <label>水流情况</label>
-          <select id="calcFlow"></select>
-        </div>
-        <div>
-          <label>风力等级</label>
-          <select id="calcWind"></select>
-        </div>
-      </div>
-      <div class="calc-btn-wrap">
-        <button class="calc-btn" id="calcBtn">计算钓组方案</button>
-      </div>
-      <div class="calc-echo" id="calcEcho" hidden></div>
-      <div id="calcResult">
-        <h3 class="sub" id="calcResultTitle">推荐钓组方案</h3>
-        <div class="table-wrap">
-          <table>
-            <tr><th style="width:34%">项目</th><th>推荐配置</th></tr>
-            <tr><td>竿稍先径</td><td id="resTip">--</td></tr>
-            <tr><td>推荐吃铅范围</td><td id="resLeadRange">--</td></tr>
-            <tr><td>建议铅重</td><td id="resLead">--</td></tr>
-            <tr><td>吃铅匹配度</td><td id="resLeadMatch">--</td></tr>
-            <tr><td>主线 / 子线</td><td id="resLine">--</td></tr>
-            <tr><td>鱼钩型号</td><td id="resHook">--</td></tr>
-            <tr><td>推荐钓法</td><td id="resMethod">--</td></tr>
-            <tr><td>桥高影响</td><td id="resBridge">--</td></tr>
-            <tr><td>预计缓降时长</td><td id="resFallTime">--</td></tr>
-            <tr><td>缓降速度参考</td><td id="resFallSpeed">--</td></tr>
-            <tr><td>搜层建议</td><td id="resSearch">--</td></tr>
-          </table>
-        </div>
-        <div class="ok-box" style="margin-top:12px;">
-          <b id="resTipsTitle">作钓小贴士（按鱼种 · 月份 · 水流 · 风力）：</b>
-          <ul id="resTips" style="margin-left:18px;margin-top:4px;"></ul>
-          <div class="calc-weather" id="resWeather"></div>
-          <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;">
-            <a href="#s-tech" class="rel-link amber" id="toTech">📖 查看本鱼种手册 →</a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
 
   <!-- 桥筏作战手册 -->
   <section id="s-tech" data-static="1">
@@ -719,10 +639,10 @@ tailwind.config = {
  * 单独维护此文件并上传覆盖，即可全站更新数据（页面自动检测新版本）。
  * 字段说明见各区块注释。本文件仅包含数据，不含业务逻辑。
  * ============================================================ */
-window.QIAOFA_DATA_VERSION = '2.5.0';
+window.QIAOFA_DATA_VERSION = '2.6.0';
 
 window.QIAOFA_DATA = {
-  version: '2.5.0',
+  version: '2.6.0',
   updatedAt: '2026-09-23',
 
   /* 月份 → 季节映射（计算器按月份联动季节） */
@@ -1615,6 +1535,15 @@ const Weather = (() => {
     try{ const d = new Date(v); if(!isNaN(d.getTime())) return ('0'+d.getHours()).slice(-2) + ':' + ('0'+d.getMinutes()).slice(-2); }catch(e){}
     return '--';
   }
+  /* 天气适配分析（结合当前目标鱼，由 app2.js 的 calcWeatherAdvice 渲染） */
+  function fillWxAdvice(){
+    const el = Utils.$('wxAdvice');
+    if(!el) return;
+    if(typeof calcWeatherAdvice !== 'function'){ el.innerHTML = ''; return; }
+    const f = FishContext.getFish();
+    if(!f){ el.innerHTML = ''; return; }
+    el.innerHTML = '<div class="wx-title">🌦️ 天气适配分析（目标鱼：' + f.name + '）</div>' + calcWeatherAdvice(f, lastData);
+  }
   function calcIndex(t, windKmh, precipProb, press, hum, extras){
     const pref = FishContext.getFish() ? FishContext.getFish().tempPref : null;
     let s = 60;
@@ -1804,6 +1733,7 @@ const Weather = (() => {
     Utils.$('offlineTip').hidden = !isOffline;
     Utils.$('wbMeta').textContent = metaText('openmeteo');
     lastData = { temp: data.current.temperature_2m, press: data.current.surface_pressure, hum: data.current.relative_humidity_2m, wind: data.current.wind_speed_10m, precipProb: days.precipitation_probability_max[0] || 0, src:'openmeteo', tmax: tmax0, tmin: tmin0, sunrise: fmtHM(sr), sunset: fmtHM(ss), moon: moon.name, yesterdayMax: opt.yesterdayMax || null };
+    fillWxAdvice();
     Bridge.post('weather', { city: currentCity.name, temp: Math.round(data.current.temperature_2m), score });
   }
   function renderAmap(j){
@@ -1845,6 +1775,7 @@ const Weather = (() => {
     Utils.$('offlineTip').hidden = true;
     Utils.$('wbMeta').textContent = metaText('amap');
     lastData = { temp: parseFloat(live.temperature), press: 1013, hum: parseFloat(live.humidity || '60'), wind: windKmh, precipProb: 20, src:'amap', tmax: tmaxA, tmin: tminA, moon: moonA.name };
+    fillWxAdvice();
     Bridge.post('weather', { city: currentCity.name, temp: live.temperature, score });
   }
   function renderQw(j){
@@ -1871,6 +1802,7 @@ const Weather = (() => {
     Utils.$('offlineTip').hidden = true;
     Utils.$('wbMeta').textContent = metaText('qweather');
     lastData = { temp: curTemp != null ? curTemp : 20, press: curPress != null ? curPress : 1013, hum: curHum != null ? curHum : 60, wind: curWind != null ? curWind : 5, precipProb: 20, src:'qweather', moon: moonQ.name };
+    fillWxAdvice();
     Bridge.post('weather', { city: currentCity.name, temp: curTemp != null ? Math.round(curTemp) : null, score });
   }
   async function loadWeather(lat, lon){
@@ -2175,7 +2107,7 @@ const Weather = (() => {
  * 模块：BaitMatch / BaitView / Calc / Tech / Search / UI / UpdateCheck / boot
  * ============================================================ */
 
-const APP_VERSION = '2.5.0';
+const APP_VERSION = '2.6.0';
 
 /* ============================================================
  * BaitMatch（配饵中心：经典配方 + 收藏到我的饵料）
@@ -2735,7 +2667,7 @@ function renderToday(){
       else h.push('<div class="td-item"><b>🌡️ 今日用饵</b>：偏热，本味/谷物+少量果酸，避杂鱼</div>');
       if(wd.moon) h.push('<div class="td-item"><b>🌙 月相</b>：' + wd.moon + (wd.sunrise ? ' · 日出 ' + wd.sunrise + ' / 日落 ' + wd.sunset : '') + '</div>');
     }
-    h.push('<div class="td-actions"><a href="#s0" class="rel-link">🧮 详细计算</a><a href="#s-tech" class="rel-link">📖 作战手册</a></div>');
+    h.push('<div class="td-actions"><a href="#s-tech" class="rel-link">📖 作战手册</a></div>');
     body.innerHTML = h.join('');
   }catch(e){ console.warn('[今日速览]', e); }
 }
@@ -2907,18 +2839,15 @@ const Tech = (() => {
   return { render: render };
 })();
 
-/* 全局联动：点击鱼种 → 切到钓组计算器 */
+/* 全局联动：点击鱼种 → 切换目标鱼并回到天气（指数与适配分析联动） */
 function jumpToFish(fishId){
   const f = (DATA.fishProfiles || {})[fishId];
-  const cs = Utils.$('calcFish');
-  if(cs) cs.value = fishId;
-  try{ Calc.run(); }catch(e){}
-  const s0 = document.getElementById('s0');
-  if(s0) s0.scrollIntoView({ behavior:'smooth' });
-  Toast.show('已切到 ' + (f ? f.name : '') + ' 的钓组计算', 'info');
+  FishContext.set(fishId);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  Toast.show('已切换目标鱼：' + (f ? f.name : '') + '（看顶部天气指数与适配分析）', 'info');
   Bridge.post('guide_fish', { fish: f ? f.name : fishId });
 }
-function openMatch(fishId, month){ jumpToFish(fishId); }
+function openMatch(fishId){ jumpToFish(fishId); }
 
 /* ============================================================
  * Search（站内搜索）
@@ -2977,7 +2906,7 @@ const Search = (() => {
       panel.querySelectorAll('.search-item').forEach(el => {
         el.addEventListener('click', function(){
           const h = JSON.parse(el.dataset.srch);
-          if(h.type === 'fish'){ Utils.$('calcFish').value = h.id; Calc.run(); document.getElementById('s0').scrollIntoView({behavior:'smooth'}); }
+          if(h.type === 'fish'){ FishContext.set(h.id); window.scrollTo({ top: 0, behavior: 'smooth' }); }
           else document.getElementById(h.id).scrollIntoView({behavior:'smooth'});
           panel.hidden = true;
           Utils.$('pageSearch').value = '';
@@ -3005,7 +2934,7 @@ const UI = (() => {
   const navLinks = [];
   function bindNav(){
     document.querySelectorAll('.topnav a').forEach(a => navLinks.push(a));
-    const sections = ['s0','s-tech'].map(id => document.getElementById(id)).filter(Boolean);
+    const sections = ['s-tech'].map(id => document.getElementById(id)).filter(Boolean);
     const techBlocks = ['t-ops','t-methods','t-spots'].map(id => document.getElementById(id)).filter(Boolean);
     const onScroll = Utils.throttleRaf(() => {
       const y = window.scrollY + 130;
@@ -3088,7 +3017,7 @@ const UI = (() => {
  * Collapse（三大模块折叠/展开）
  * ============================================================ */
 const Collapse = (() => {
-  const SECTIONS = ['s0', 's-tech'];
+  const SECTIONS = ['s-tech'];
   function updateBtn(){
     const btn = Utils.$('foldAllBtn');
     if(!btn) return;
@@ -3237,7 +3166,6 @@ const Collapse = (() => {
   FishContext.onChange(renderToday);
   try{ LogBook.bind(); }catch(e){ console.warn('[init] LogBook 失败：', e); }
   [
-    ['Calc', Calc.bind],
     ['Tech', function(){ Tech.render(null); }],
     ['Search', Search.bind],
     ['UI', UI.bind],
