@@ -385,6 +385,18 @@ tailwind.config = {
   .wx-advice .wx-title{font-weight:700;color:#fff;margin-bottom:2px;}
   .wx-advice .cw-title{color:#fff;}
   .wx-advice .cw-line{color:#dcf2f6;}
+  /* 逐小时指数 + 多鱼种排行 */
+  .wx-hourly{margin-top:8px;border-top:1px dashed rgba(255,255,255,.25);padding-top:8px;}
+  .wxh-title{font-size:.82rem;color:#eaf8fa;margin-bottom:4px;}
+  .wxh-gold{color:#ffd98a;font-weight:700;}
+  .wxh-chart{width:100%;height:72px;display:block;}
+  .wx-rank{margin-top:8px;border-top:1px dashed rgba(255,255,255,.25);padding-top:8px;}
+  .wxr-title{font-size:.82rem;color:#eaf8fa;margin-bottom:6px;}
+  .wxr-list{display:flex;flex-wrap:wrap;gap:6px;}
+  .wxr-item{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:999px;padding:6px 12px;font-size:.82rem;cursor:pointer;min-height:36px;}
+  .wxr-item b{color:#ffd98a;margin-left:2px;}
+  .wxr-item.on{background:#fff;color:#0369a1;border-color:#fff;}
+  .wxr-item.on b{color:#b45309;}
   /* 今日出钓速览 */
   .today-wrap{max-width:960px;margin:16px auto 0;}
   .today-card{background:rgba(255,255,255,.13);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.25);border-radius:16px;padding:14px 16px;text-align:left;color:#fff;}
@@ -517,6 +529,8 @@ tailwind.config = {
       <div class="wb-meta" id="wbMeta"></div>
       <div class="wb-factors" id="wbFactors"></div>
       <div class="wx-advice" id="wxAdvice"></div>
+      <div class="wx-hourly" id="wxHourly"></div>
+      <div class="wx-rank" id="wxRank"></div>
       <div class="offline-tip" id="offlineTip" hidden>⚠️ 当前为离线参考数据，联网后可获取实时天气</div>
     </div>
   </div>
@@ -639,10 +653,10 @@ tailwind.config = {
  * 单独维护此文件并上传覆盖，即可全站更新数据（页面自动检测新版本）。
  * 字段说明见各区块注释。本文件仅包含数据，不含业务逻辑。
  * ============================================================ */
-window.QIAOFA_DATA_VERSION = '2.6.1';
+window.QIAOFA_DATA_VERSION = '2.7.0';
 
 window.QIAOFA_DATA = {
-  version: '2.6.1',
+  version: '2.7.0',
   updatedAt: '2026-09-23',
 
   /* 月份 → 季节映射（计算器按月份联动季节） */
@@ -1544,8 +1558,80 @@ const Weather = (() => {
     if(!f){ el.innerHTML = ''; return; }
     el.innerHTML = '<div class="wx-title">🌦️ 天气适配分析（目标鱼：' + f.name + '）</div>' + calcWeatherAdvice(f, lastData);
   }
-  function calcIndex(t, windKmh, precipProb, press, hum, extras){
-    const pref = FishContext.getFish() ? FishContext.getFish().tempPref : null;
+  /* 逐小时出钓指数（SVG 柱状 + 黄金时段） */
+  function renderHourly(){
+    const box = Utils.$('wxHourly');
+    if(!box) return;
+    const d = lastData;
+    if(!d || !d.hourly || !d.hourly.length){ box.innerHTML = ''; return; }
+    const sid = FishContext.get();
+    const extras = { tmax: d.tmax, tmin: d.tmin, sunriseH: d.sunriseH, sunsetH: d.sunsetH, moonScore: d.moonScore, yesterdayMax: d.yesterdayMax };
+    const scores = d.hourly.map(function(hh){
+      return { h: hh.h, s: calcIndexFor(hh.temp, hh.wind, hh.precip, hh.press, d.hum, Object.assign({}, extras, { hourOfDay: hh.h }), sid) };
+    });
+    const W = 600, H = 86, bw = W / scores.length;
+    let bars = '';
+    scores.forEach(function(x, i){
+      const bh = Math.max(3, Math.round(x.s / 100 * (H - 26)));
+      const col = x.s >= 70 ? '#4ade80' : x.s >= 45 ? '#fbbf24' : '#f87171';
+      bars += '<rect x="' + (i * bw + 2).toFixed(1) + '" y="' + (H - bh - 16) + '" width="' + (bw - 4).toFixed(1) + '" height="' + bh + '" rx="2.5" fill="' + col + '" opacity="' + (0.45 + 0.55 * x.s / 100).toFixed(2) + '"/>';
+    });
+    const golds = []; let st = -1;
+    scores.forEach(function(x, i){
+      if(x.s >= 70){ if(st < 0) st = x.h; }
+      else { if(st >= 0){ golds.push([st, scores[i - 1].h]); st = -1; } }
+    });
+    if(st >= 0) golds.push([st, scores[scores.length - 1].h]);
+    const goldTxt = golds.length ? golds.map(function(g){ return g[0] + ':00-' + (g[1] + 1) + ':00'; }).join('、') : '今天无明显黄金时段';
+    let ticks = '';
+    [0, 6, 12, 18].forEach(function(h){
+      ticks += '<text x="' + (h * bw + bw / 2).toFixed(1) + '" y="' + (H - 3) + '" text-anchor="middle" font-size="10" fill="#bcdde4">' + h + '时</text>';
+    });
+    const peak = scores.reduce(function(a, b){ return b.s > a.s ? b : a; }, scores[0]);
+    box.innerHTML =
+      '<div class="wxh-title">📊 今日逐小时指数 <span class="wxh-gold">黄金时段：' + goldTxt + '</span></div>' +
+      '<svg class="wxh-chart" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' + bars + ticks + '</svg>' +
+      '<div class="wxh-title" style="margin-top:2px;">今日峰值 <b style="color:#ffd98a;">' + peak.s + '</b> 分（' + peak.h + ':00）</div>';
+  }
+  /* 多鱼种对比（今日全天峰值排行） */
+  function renderFishRank(){
+    const box = Utils.$('wxRank');
+    if(!box) return;
+    const d = lastData;
+    if(!d || !d.hourly || !d.hourly.length){ box.innerHTML = ''; return; }
+    const extras = { tmax: d.tmax, tmin: d.tmin, sunriseH: d.sunriseH, sunsetH: d.sunsetH, moonScore: d.moonScore, yesterdayMax: d.yesterdayMax };
+    const ids = Object.keys(DATA.fishProfiles || {});
+    const rank = ids.map(function(id){
+      const peak = Math.max.apply(null, d.hourly.map(function(hh){
+        return calcIndexFor(hh.temp, hh.wind, hh.precip, hh.press, d.hum, Object.assign({}, extras, { hourOfDay: hh.h }), id);
+      }));
+      return { id: id, s: peak, name: (DATA.fishProfiles[id] || {}).name || id };
+    }).sort(function(a, b){ return b.s - a.s; }).slice(0, 6);
+    const cur = FishContext.get();
+    box.innerHTML = '<div class="wxr-title">🎣 今日最推荐（全天峰值，点击切换目标鱼）</div><div class="wxr-list">' +
+      rank.map(function(r){
+        return '<button class="wxr-item' + (r.id === cur ? ' on' : '') + '" data-fish="' + r.id + '">' + Utils.esc(r.name) + '<b>' + r.s + '</b></button>';
+      }).join('') + '</div>';
+    box.querySelectorAll('[data-fish]').forEach(function(el){
+      el.addEventListener('click', function(){ FishContext.set(el.dataset.fish); });
+    });
+  }
+  /* 鱼种敏感度系数：气压/风对不同鱼的影响差异（越低越抗） */
+  const SENS = {
+    crucian:{wind:0.8,press:0.8}, carp:{wind:1,press:1}, grass:{wind:1,press:1.3}, black:{wind:0.9,press:1.1},
+    bream:{wind:1.1,press:1}, silver:{wind:1.2,press:1.5}, culter:{wind:1.2,press:1.1}, qingshao:{wind:1.2,press:1.1},
+    redfin:{wind:1.1,press:1.1}, yellowtail:{wind:1,press:0.9}, xilie:{wind:1,press:0.9}, whitebait:{wind:1.3,press:1},
+    minnow:{wind:1.2,press:1}, chiyanzun:{wind:1,press:1}, catfish:{wind:0.6,press:0.5}, sheatfish:{wind:0.6,press:0.5},
+    huziniang:{wind:0.6,press:0.4}, chachawei:{wind:0.8,press:0.6}, wei:{wind:0.7,press:0.6}, mandarin:{wind:0.8,press:0.8},
+    tilapia:{wind:1,press:0.9}, mudcarp:{wind:1,press:0.9}, shatangli:{wind:0.7,press:0.6}, huaguyu:{wind:0.9,press:0.9},
+    xishiban:{wind:1.1,press:0.8}, junyu:{wind:1,press:1}, bass:{wind:0.9,press:0.9}, ganyu:{wind:1.2,press:1.1},
+    snakehead:{wind:0.8,press:0.7}, wuni:{wind:0.7,press:0.5}, mixed:{wind:1,press:1}
+  };
+  /* 纯函数评分：按指定鱼种计算（供当前指数 / 逐小时 / 多鱼种排行共用） */
+  function calcIndexFor(t, windKmh, precipProb, press, hum, extras, fishId){
+    const fp = (DATA.fishProfiles || {})[fishId] || null;
+    const pref = fp ? fp.tempPref : null;
+    const sens = SENS[fishId] || { wind:1, press:1 };
     let s = 60;
     if(pref && isFinite(pref.min) && isFinite(pref.max)){
       if(t >= pref.min && t <= pref.max) s += 12;
@@ -1556,13 +1642,20 @@ const Weather = (() => {
       if(t>=15 && t<=28) s += 12; else if(t>=8 && t<15) s += 6;
       else if(t>28 && t<=33) s += 3; else if(t<0 || t>35) s -= 20; else if(t<5) s -= 10;
     }
-    if(windKmh <= 8) s += 6; else if(windKmh <= 19) s += 3;
-    else if(windKmh <= 29) s -= 10; else s -= 25;
+    /* 风（按鱼种敏感度缩放） */
+    let wv = 0;
+    if(windKmh <= 8) wv = 6; else if(windKmh <= 19) wv = 3;
+    else if(windKmh <= 29) wv = -10; else wv = -25;
+    s += Math.round(wv * sens.wind);
     if(precipProb <= 10) s += 6; else if(precipProb <= 40) s += 0;
     else if(precipProb <= 70) s -= 10; else s -= 20;
-    if(press>=1002 && press<=1022) s += 6; else if(press<995 || press>1030) s -= 10;
+    /* 气压（按鱼种敏感度缩放；低压不利） */
+    let pv = 0;
+    if(press >= 1002 && press <= 1022) pv = 6;
+    else if(press < 1000 || press > 1030) pv = -10;
+    else pv = -3;
+    s += Math.round(pv * sens.press);
     if(hum>=50 && hum<=80) s += 3; else if(hum>90) s -= 5;
-    /* 新增维度：昼夜温差 / 昨日骤变 / 日出日落窗口 / 月相 */
     if(extras){
       if(extras.tmax != null && extras.tmin != null){
         const diff = extras.tmax - extras.tmin;
@@ -1570,51 +1663,21 @@ const Weather = (() => {
       }
       if(extras.yesterdayMax != null && extras.tmax != null){
         const jump = Math.abs(extras.tmax - extras.yesterdayMax);
-        if(jump >= 8) s -= 10;
-        else if(jump >= 5) s -= 4;
-        else s += 1;
+        if(jump >= 8) s -= 10; else if(jump >= 5) s -= 4; else s += 1;
       }
-      if(extras.sunriseH != null && extras.sunsetH != null){
-        const now = new Date();
-        const hr = now.getHours() + now.getMinutes()/60;
-        if(hr >= extras.sunriseH - 0.5 && hr <= extras.sunriseH + 1.5) s += 6;
-        else if(hr >= extras.sunsetH - 2 && hr <= extras.sunsetH + 0.5) s += 6;
-        else if(hr >= 11 && hr <= 15) s -= 6;
-      }
-      if(extras.moonScore != null) s += extras.moonScore;
-    }
-    if(windKmh <= 8) s += 10; else if(windKmh <= 19) s += 5;
-    else if(windKmh <= 29) s -= 10; else s -= 25;
-    if(precipProb <= 10) s += 10; else if(precipProb <= 40) s += 0;
-    else if(precipProb <= 70) s -= 10; else s -= 20;
-    if(press>=1002 && press<=1022) s += 10; else if(press<995 || press>1030) s -= 10;
-    if(hum>=50 && hum<=80) s += 5; else if(hum>90) s -= 5;
-    /* 新增维度：昼夜温差 / 昨日骤变 / 日出日落窗口 / 月相 */
-    if(extras){
-      if(extras.tmax != null && extras.tmin != null){
-        const diff = extras.tmax - extras.tmin;
-        if(diff <= 6) s += 8;
-        else if(diff <= 9) s += 2;
-        else if(diff <= 12) s -= 6;
-        else s -= 12;
-      }
-      if(extras.yesterdayMax != null && extras.tmax != null){
-        const jump = Math.abs(extras.tmax - extras.yesterdayMax);
-        if(jump >= 8) s -= 10;
-        else if(jump >= 5) s -= 4;
-        else s += 2;
-      }
-      if(extras.sunriseH != null && extras.sunsetH != null){
-        const now = new Date();
-        const hr = now.getHours() + now.getMinutes()/60;
-        if(hr >= extras.sunriseH - 0.5 && hr <= extras.sunriseH + 1.5) s += 8;
-        else if(hr >= extras.sunsetH - 2 && hr <= extras.sunsetH + 0.5) s += 8;
+      if(extras.sunriseH != null || extras.sunsetH != null){
+        const hr = (extras.hourOfDay != null) ? extras.hourOfDay : (new Date().getHours() + new Date().getMinutes()/60);
+        if(extras.sunriseH != null && hr >= extras.sunriseH - 0.5 && hr <= extras.sunriseH + 1.5) s += 6;
+        else if(extras.sunsetH != null && hr >= extras.sunsetH - 2 && hr <= extras.sunsetH + 0.5) s += 6;
         else if(hr >= 11 && hr <= 15) s -= 6;
       }
       if(extras.moonScore != null) s += extras.moonScore;
     }
     if(!isFinite(s)) s = 50;
-    return Math.max(0, Math.min(100, s));
+    return Math.max(0, Math.min(100, Math.round(s)));
+  }
+  function calcIndex(t, windKmh, precipProb, press, hum, extras){
+    return calcIndexFor(t, windKmh, precipProb, press, hum, extras, FishContext.get());
   }
   function levelText(s){
     if(s>=80) return ['优 · 爆护天','#2f8f5f'];
@@ -1732,8 +1795,25 @@ const Weather = (() => {
       precipProb: days.precipitation_probability_max[0] || 0, press: data.current.surface_pressure, hum: data.current.relative_humidity_2m }));
     Utils.$('offlineTip').hidden = !isOffline;
     Utils.$('wbMeta').textContent = metaText('openmeteo');
-    lastData = { temp: data.current.temperature_2m, press: data.current.surface_pressure, hum: data.current.relative_humidity_2m, wind: data.current.wind_speed_10m, precipProb: days.precipitation_probability_max[0] || 0, src:'openmeteo', tmax: tmax0, tmin: tmin0, sunrise: fmtHM(sr), sunset: fmtHM(ss), moon: moon.name, yesterdayMax: opt.yesterdayMax || null };
+    lastData = { temp: data.current.temperature_2m, press: data.current.surface_pressure, hum: data.current.relative_humidity_2m, wind: data.current.wind_speed_10m, precipProb: days.precipitation_probability_max[0] || 0, src:'openmeteo', tmax: tmax0, tmin: tmin0, sunrise: fmtHM(sr), sunset: fmtHM(ss), sunriseH: sunriseH, sunsetH: sunsetH, moon: moon.name, moonScore: moon.score, yesterdayMax: opt.yesterdayMax || null, hourly: (function(){
+      const hly = [];
+      if(data.hourly && data.hourly.time){
+        for(let i = 0; i < Math.min(24, data.hourly.time.length); i++){
+          const dt = new Date(data.hourly.time[i]);
+          hly.push({
+            h: dt.getHours(),
+            temp: data.hourly.temperature_2m[i],
+            press: data.hourly.surface_pressure[i],
+            wind: data.hourly.wind_speed_10m[i],
+            precip: (data.hourly.precipitation_probability && data.hourly.precipitation_probability[i] != null) ? data.hourly.precipitation_probability[i] : 0
+          });
+        }
+      }
+      return hly;
+    })() };
     fillWxAdvice();
+    renderHourly();
+    renderFishRank();
     Bridge.post('weather', { city: currentCity.name, temp: Math.round(data.current.temperature_2m), score });
   }
   function renderAmap(j){
@@ -1775,7 +1855,7 @@ const Weather = (() => {
     Utils.$('offlineTip').hidden = true;
     Utils.$('wbMeta').textContent = metaText('amap');
     lastData = { temp: parseFloat(live.temperature), press: 1013, hum: parseFloat(live.humidity || '60'), wind: windKmh, precipProb: 20, src:'amap', tmax: tmaxA, tmin: tminA, moon: moonA.name };
-    fillWxAdvice();
+    fillWxAdvice(); renderHourly(); renderFishRank();
     Bridge.post('weather', { city: currentCity.name, temp: live.temperature, score });
   }
   function renderQw(j){
@@ -1802,7 +1882,7 @@ const Weather = (() => {
     Utils.$('offlineTip').hidden = true;
     Utils.$('wbMeta').textContent = metaText('qweather');
     lastData = { temp: curTemp != null ? curTemp : 20, press: curPress != null ? curPress : 1013, hum: curHum != null ? curHum : 60, wind: curWind != null ? curWind : 5, precipProb: 20, src:'qweather', moon: moonQ.name };
-    fillWxAdvice();
+    fillWxAdvice(); renderHourly(); renderFishRank();
     Bridge.post('weather', { city: currentCity.name, temp: curTemp != null ? Math.round(curTemp) : null, score });
   }
   async function loadWeather(lat, lon){
@@ -1842,6 +1922,7 @@ const Weather = (() => {
       } else {
         const url = 'https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+
           '&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m,uv_index'+
+          '&hourly=temperature_2m,surface_pressure,wind_speed_10m,precipitation_probability'+
           '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset,wind_speed_10m_max'+
           '&timezone=auto&forecast_days=3';
         const data = await Utils.fetchJSON(url, 8000);
@@ -2107,7 +2188,7 @@ const Weather = (() => {
  * 模块：BaitMatch / BaitView / Calc / Tech / Search / UI / UpdateCheck / boot
  * ============================================================ */
 
-const APP_VERSION = '2.6.1';
+const APP_VERSION = '2.7.0';
 
 /* ============================================================
  * BaitMatch（配饵中心：经典配方 + 收藏到我的饵料）
