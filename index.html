@@ -525,7 +525,6 @@ tailwind.config = {
   <div class="nav-inner">
     <a href="#weather">🌤️ 天气指数</a>
     <a href="#s0">🧮 钓组计算器</a>
-    <a href="#s-bait">🎣 饵料库</a>
     <a href="#s-tech">📖 作战手册</a>
     <a href="#safety">⚠️ 安全提示</a>
     <a href="#s-log">📒 钓况</a>
@@ -533,7 +532,6 @@ tailwind.config = {
   <div id="mobileMenu">
     <a href="#weather">🌤️ 天气指数</a>
     <a href="#s0">🧮 钓组计算器</a>
-    <a href="#s-bait">🎣 饵料库</a>
     <a href="#s-tech">📖 作战手册</a>
     <a href="#safety">⚠️ 安全提示</a>
     <a href="#s-log">📒 钓况</a>
@@ -622,62 +620,10 @@ tailwind.config = {
           <ul id="resTips" style="margin-left:18px;margin-top:4px;"></ul>
           <div class="calc-weather" id="resWeather"></div>
           <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;">
-            <a href="#s-bait" class="rel-link" id="toMatch">🎣 查看本鱼种配饵方案 →</a>
             <a href="#s-tech" class="rel-link amber" id="toTech">📖 查看本鱼种手册 →</a>
           </div>
         </div>
       </div>
-    </div>
-  </section>
-
-  <!-- 饵料库（配饵中心 + 经典配方 + 我的饵料 + 饵料库参考） -->
-  <section id="s-bait" data-static="1">
-    <div class="sec-head"><div class="num">🎣</div><h2>饵料库 · 配饵中心</h2><span class="static-badge">离线可阅</span></div>
-    <div class="card">
-      <div class="principle-card">
-        <h4>🧭 配饵原理速览</h4>
-        <div class="pf-formula">基础饵 40-60% + 主攻饵 30-40% + 状态饵 10-20% + 添加剂适量</div>
-        <ul>
-          <li>🌡️ 季节味型：春腥 · 夏淡 · 秋香 · 冬浓（低温加腥、高温清淡避杂鱼）</li>
-          <li>💧 状态调整：拉饵加拉丝粉；搓饵控水比；散炮减水、加重颗粒增比重</li>
-          <li>🎯 窝饵同味：窝里吃的钩上也有，留鱼更稳</li>
-          <li>⚠️ 添加剂宁少勿多：味型太杂或过量易死窝</li>
-        </ul>
-      </div>
-      <div class="calc-form">
-        <div>
-          <label>目标鱼种</label>
-          <select id="matchFish"></select>
-        </div>
-        <div>
-          <label>作钓月份</label>
-          <select id="matchMonth"></select>
-          <span class="field-msg" style="display:block;color:var(--brand2);font-size:.76rem;margin-top:2px;">配饵要点随月份联动</span>
-        </div>
-        <div>
-          <label>作钓环境</label>
-          <select id="matchEnv">
-            <option value="wild" selected>野钓 / 湖库江河</option>
-            <option value="black">黑坑 / 鱼塘</option>
-          </select>
-        </div>
-      </div>
-      <div class="calc-btn-wrap">
-        <button class="calc-btn" id="matchBtn">生成配饵方案</button>
-      </div>
-      <div id="matchResult"></div>
-
-      <h3 class="sub">📚 饵料库 · 完整分类（市面主流 · 含开饵水比）</h3>
-      <div class="bait-tabs" id="baitTabs"></div>
-      <div class="bait-filter">
-        <select id="baitFish"><option value="">全部鱼种</option></select>
-        <select id="baitBrand"><option value="">全部品牌</option></select>
-        <input id="baitKw" placeholder="搜索名称 / 味型 / 备注…" autocomplete="off">
-        <div class="bait-count" id="baitCount"></div>
-      </div>
-      <div class="bait-list" id="baitList"></div>
-      <div class="pager" id="baitPager"></div>
-      <p class="bait-note" style="margin-top:12px;font-size:.78rem;color:var(--muted);">* 饵料与配比数据统一维护在数据文件，后续增加饵料只需追加一条记录即可自动入列表。</p>
     </div>
   </section>
 
@@ -773,10 +719,10 @@ tailwind.config = {
  * 单独维护此文件并上传覆盖，即可全站更新数据（页面自动检测新版本）。
  * 字段说明见各区块注释。本文件仅包含数据，不含业务逻辑。
  * ============================================================ */
-window.QIAOFA_DATA_VERSION = '2.4.2';
+window.QIAOFA_DATA_VERSION = '2.5.0';
 
 window.QIAOFA_DATA = {
-  version: '2.4.2',
+  version: '2.5.0',
   updatedAt: '2026-09-23',
 
   /* 月份 → 季节映射（计算器按月份联动季节） */
@@ -2229,7 +2175,7 @@ const Weather = (() => {
  * 模块：BaitMatch / BaitView / Calc / Tech / Search / UI / UpdateCheck / boot
  * ============================================================ */
 
-const APP_VERSION = '2.4.2';
+const APP_VERSION = '2.5.0';
 
 /* ============================================================
  * BaitMatch（配饵中心：经典配方 + 收藏到我的饵料）
@@ -2789,7 +2735,7 @@ function renderToday(){
       else h.push('<div class="td-item"><b>🌡️ 今日用饵</b>：偏热，本味/谷物+少量果酸，避杂鱼</div>');
       if(wd.moon) h.push('<div class="td-item"><b>🌙 月相</b>：' + wd.moon + (wd.sunrise ? ' · 日出 ' + wd.sunrise + ' / 日落 ' + wd.sunset : '') + '</div>');
     }
-    h.push('<div class="td-actions"><a href="#s0" class="rel-link">🧮 详细计算</a><a href="#s-bait" class="rel-link">🎣 配饵中心</a><a href="#s-tech" class="rel-link">📖 作战手册</a></div>');
+    h.push('<div class="td-actions"><a href="#s0" class="rel-link">🧮 详细计算</a><a href="#s-tech" class="rel-link">📖 作战手册</a></div>');
     body.innerHTML = h.join('');
   }catch(e){ console.warn('[今日速览]', e); }
 }
@@ -2961,22 +2907,18 @@ const Tech = (() => {
   return { render: render };
 })();
 
-/* 全局联动：跳转目标鱼（打开配饵方案） */
+/* 全局联动：点击鱼种 → 切到钓组计算器 */
 function jumpToFish(fishId){
   const f = (DATA.fishProfiles || {})[fishId];
-  Utils.$('matchFish').value = fishId;
-  BaitMatch.render();
-  document.getElementById('s-bait').scrollIntoView({ behavior:'smooth' });
-  Toast.show('已打开 ' + (f ? f.name : '') + ' 的配饵方案', 'info');
+  const cs = Utils.$('calcFish');
+  if(cs) cs.value = fishId;
+  try{ Calc.run(); }catch(e){}
+  const s0 = document.getElementById('s0');
+  if(s0) s0.scrollIntoView({ behavior:'smooth' });
+  Toast.show('已切到 ' + (f ? f.name : '') + ' 的钓组计算', 'info');
   Bridge.post('guide_fish', { fish: f ? f.name : fishId });
 }
-function openMatch(fishId, month){
-  BaitMatch.setFish(fishId);
-  if(month && Utils.$('matchMonth')){ Utils.$('matchMonth').value = String(month); }
-  BaitMatch.render();
-  document.getElementById('s-bait').scrollIntoView({ behavior:'smooth' });
-  Toast.show('已生成 ' + ((DATA.fishProfiles || {})[fishId] ? DATA.fishProfiles[fishId].name : '') + ' 配饵方案', 'info');
-}
+function openMatch(fishId, month){ jumpToFish(fishId); }
 
 /* ============================================================
  * Search（站内搜索）
@@ -2997,9 +2939,6 @@ const Search = (() => {
     });
     (DATA.strategy.spots || []).forEach(s => {
       index.push({ sec:'选位标点', title:s.name, text:s.points.join(' '), type:'block', id:'t-spots' });
-    });
-    (DATA.baits || []).forEach(b => {
-      index.push({ sec:'饵料', title:b.brand + ' · ' + b.name, text:(b.waterRatio || '') + ' ' + b.note, type:'bait', name:b.name });
     });
   }
   function hl(text, kw){
@@ -3038,8 +2977,7 @@ const Search = (() => {
       panel.querySelectorAll('.search-item').forEach(el => {
         el.addEventListener('click', function(){
           const h = JSON.parse(el.dataset.srch);
-          if(h.type === 'fish'){ Utils.$('matchFish').value = h.id; BaitMatch.render(); document.getElementById('s-bait').scrollIntoView({behavior:'smooth'}); }
-          else if(h.type === 'bait'){ document.getElementById('s-bait').scrollIntoView({behavior:'smooth'}); BaitView.setKw(h.name); Toast.show('已定位饵料：' + h.name, 'info'); }
+          if(h.type === 'fish'){ Utils.$('calcFish').value = h.id; Calc.run(); document.getElementById('s0').scrollIntoView({behavior:'smooth'}); }
           else document.getElementById(h.id).scrollIntoView({behavior:'smooth'});
           panel.hidden = true;
           Utils.$('pageSearch').value = '';
@@ -3067,7 +3005,7 @@ const UI = (() => {
   const navLinks = [];
   function bindNav(){
     document.querySelectorAll('.topnav a').forEach(a => navLinks.push(a));
-    const sections = ['s0','s-bait','s-tech'].map(id => document.getElementById(id)).filter(Boolean);
+    const sections = ['s0','s-tech'].map(id => document.getElementById(id)).filter(Boolean);
     const techBlocks = ['t-ops','t-methods','t-spots'].map(id => document.getElementById(id)).filter(Boolean);
     const onScroll = Utils.throttleRaf(() => {
       const y = window.scrollY + 130;
@@ -3150,7 +3088,7 @@ const UI = (() => {
  * Collapse（三大模块折叠/展开）
  * ============================================================ */
 const Collapse = (() => {
-  const SECTIONS = ['s0', 's-bait', 's-tech'];
+  const SECTIONS = ['s0', 's-tech'];
   function updateBtn(){
     const btn = Utils.$('foldAllBtn');
     if(!btn) return;
@@ -3299,8 +3237,6 @@ const Collapse = (() => {
   FishContext.onChange(renderToday);
   try{ LogBook.bind(); }catch(e){ console.warn('[init] LogBook 失败：', e); }
   [
-    ['BaitView', BaitView.bind],
-    ['BaitMatch', BaitMatch.bind],
     ['Calc', Calc.bind],
     ['Tech', function(){ Tech.render(null); }],
     ['Search', Search.bind],
